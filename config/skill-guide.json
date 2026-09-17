@@ -1,0 +1,697 @@
+{
+  "_comment": "スキル解説の辞書。キーは config/taxonomy.json の skills と過不足なく一致させる（test/skill-guide.test.js で検査）。含む語は taxonomy の正規表現からビルド時に作るのでここには書かない。text / reason / tech には見立てと技術の説明だけを書き、データの動き（数値・伸びた/減った）は書かない。データは次の sync で変わるが、ここは手で直すまで変わらないため",
+  "writtenAt": "2026-09-17",
+  "author": "Claude（LLM）",
+  "knowledgeAsOf": "2026-05",
+
+  "summary": {
+    "rising": ["ai_agents", "llm", "rag", "anthropic_api", "mlops", "typescript", "postgres", "rust", "testing", "cicd", "pytorch", "embedded"],
+    "falling": ["prompt_eng", "langchain", "tensorflow", "nlp", "deep_learning", "graphql", "mongodb", "spark", "ruby", "blockchain", "vue", "angular"],
+    "text": "AI がコードを書く量が増えるほど、価値が移る先は「書くこと」から「何を作るかを決め、正しく動くことを確かめ、本番で動かし続けること」になると見ている。そのため、特定の言語やフレームワークの文法を知っていること自体の値打ちは下がり、型・テスト・CI のように機械が書いたものを機械で検証する仕組みと、データベースやクラウドのように障害の責任を人が負う層の値打ちが上がる。AI 系では、モデルを作る技術より、既存のモデルを業務に組み込む技術（エージェント、検索との組み合わせ、評価と運用）に需要が寄る。一方で、流行の早い段階で職種名やスキル名として独立していたもの（プロンプトエンジニアリング、特定のラッパーフレームワーク）は、基礎的な素養やより一般的な呼び名に吸収されて求人票から消えていくと見る。言語やフレームワークでは、すでに主流のもの（Python、TypeScript、React、Postgres）がさらに集中し、代替の多い中位のものが削られやすい。AI が学習した量の多い技術ほど AI の支援が効き、採用側がそれを選ぶ理由が増えるためである。ただしこれは執筆者の見立てで、特に「消える」側の予測は、求人票が語を書かなくなることと仕事が無くなることの区別がつきにくい点に注意してほしい。"
+  },
+
+  "categories": {
+    "lang": {
+      "label": "言語",
+      "text": "言語の選択は、AI の支援の効き具合に引っ張られると見ている。学習データが多く型のある言語ほど生成と検証がうまくいくため、Python と TypeScript への集中が続き、新規採用の場面で中位の動的言語や関数型言語が選ばれる理由は減る。例外は性能と安全性が要る層で、Rust は C/C++ の置き換え先としての需要が続く。Java や C# は大企業の既存システムを抱えて安定するが、HN の求人は新興企業に偏るので、この画面では実際より小さく見える。"
+    },
+    "frontend": {
+      "label": "フロントエンド",
+      "text": "UI の実装は AI の生成が最も効く領域の一つで、React と Next.js と Tailwind の組み合わせが生成ツールの既定になりつつあることが、この組み合わせへの集中を強めると見ている。その分、フロントエンド専任の求人は「画面を組める」だけでは差がつきにくくなり、設計・アクセシビリティ・性能・バックエンドとの境界まで扱える人に需要が寄る。Vue と Angular は既存の資産で残るが、新規で選ばれる理由は減る。"
+    },
+    "backend": {
+      "label": "バックエンド・DB",
+      "text": "アプリケーションのコードは AI が書けても、データの設計・整合性・障害時の復旧は人が責任を負う部分として残る。特に PostgreSQL は、全文検索・JSON・ベクトル検索（pgvector）を1つにまとめられるので、専用の DB を増やさずに済ませる流れの中心にいると見る。GraphQL や MongoDB のように、特定の問題に対する別解として広まった技術は、汎用の選択肢に戻る動きの中で選ばれにくくなる。"
+    },
+    "data": {
+      "label": "データ基盤",
+      "text": "分散処理の基盤を自前で組む仕事は、手元や単一ノードで十分速い分析エンジン（DuckDB、ClickHouse）と、運用込みで提供されるデータウェアハウスに置き換わっていくと見ている。Spark や Kafka を運用する専門性は大規模な会社に集約され、中小規模では SQL とデータモデリングの力の方が問われる。AI の業務利用が増えるほど、学習や検索に使う社内データの整備は重要になるので、データ基盤の仕事そのものは減らない。"
+    },
+    "infra": {
+      "label": "クラウド・インフラ",
+      "text": "クラウドとコンテナは前提の技術になっていて、求人票にわざわざ書かれる語としては横ばいが続くと見ている。AI が設定ファイルを生成できるようになるほど、差がつくのは生成された構成が安全で費用に見合うかを判断する力になる。GPU を含む計算資源の調達と費用管理は新しい仕事として増えるが、それを直接表す語はこの語彙にはまだ無い。"
+    },
+    "ai": {
+      "label": "AI・機械学習",
+      "text": "モデルを一から作る仕事は少数の研究組織に集中し、多くの会社の求人は、既存のモデルを API で呼び、検索やツールと組み合わせ、評価して運用する仕事に移ると見ている。エージェント、評価・監視（MLOps／LLMOps）、社内データとの接続がその中心になる。一方で、ブームの初期に独立したスキル名だったもの（プロンプトエンジニアリング、特定のフレームワーク名）や、LLM 以前の呼び名（NLP、ディープラーニング）は、より一般的な語に吸収されて求人票から減る。「AI」という語そのものは宣伝文句としても使われるので、スキルの需要とは分けて読む必要がある。"
+    },
+    "platform": {
+      "label": "モバイル・その他",
+      "text": "モバイルは成熟した市場で、大きく増えも減りもしないと見ている。組み込み・ファームウェアは、ロボティクスや端末側での AI 推論、防衛・エネルギー分野の投資で需要が続き、しかも実機での検証が要るため AI による置き換えが遅い領域である。ブロックチェーンは投機の波に連動して求人が上下し、長期的な技術需要としては縮小すると見る。"
+    },
+    "process": {
+      "label": "開発プロセス",
+      "text": "AI が書くコードの量が増えるほど、それを自動で検証する仕組みの価値が上がると見ている。テストと CI/CD は、人が1行ずつ読まなくても変更を安全に取り込むための前提で、AI エージェントに作業を任せる会社ほど整備が求められる。語としては当たり前すぎて求人票に書かれにくいので、この画面の値は実際の重要度より小さく出る。"
+    }
+  },
+
+  "skills": {
+    "python": {
+      "label": "Python",
+      "category": "lang",
+      "tech": "汎用のスクリプト言語。データ分析・機械学習・バックエンド・自動化で広く使われる。AI 関連のライブラリ（PyTorch、各社の SDK）の多くが最初に Python 向けに出る。",
+      "outlook": "up",
+      "reason": "AI とデータの仕事の標準言語で、AI を業務に組み込む仕事が増えるほど使われる。型ヒントや高速なパッケージ管理（uv など）の整備で、大規模な開発にも使いやすくなっている。",
+      "note": null
+    },
+    "javascript": {
+      "label": "JavaScript",
+      "category": "lang",
+      "tech": "ブラウザで動く唯一の標準言語で、Node.js などでサーバー側にも使われる。求人票の「JS」は TypeScript を含む Web 開発全般の意味で書かれることが多い。",
+      "outlook": "flat",
+      "reason": "Web の基盤であり続けるが、新規の開発は TypeScript で書くのが標準になり、求人票の語としては TypeScript に置き換わっていく。両方を合わせた需要は横ばいと見る。",
+      "note": null
+    },
+    "typescript": {
+      "label": "TypeScript",
+      "category": "lang",
+      "tech": "JavaScript に静的な型を足した言語。コンパイル時に型の誤りを見つけられ、エディタの補完や大規模なリファクタリングが効く。フロントエンドとバックエンド（Node.js）の両方で使われる。",
+      "outlook": "up",
+      "reason": "型は AI が生成したコードを機械的に検証する手段になるので、AI の支援を前提にした開発ほど選ばれる。コンパイラの Go への移植など、大規模コードでの速度改善も進んでいる。",
+      "note": null
+    },
+    "java": {
+      "label": "Java",
+      "category": "lang",
+      "tech": "JVM 上で動く静的型付けの言語。金融・大企業の基幹系・Android の旧来のコード・大規模なバックエンドで使われる。Spring が代表的なフレームワーク。",
+      "outlook": "flat",
+      "reason": "大企業の既存システムを保守・移行する需要が長く続く。新興企業では選ばれにくく、HN の求人は新興企業に偏るため、この画面では実際の市場より小さく見える。",
+      "note": null
+    },
+    "go": {
+      "label": "Go",
+      "category": "lang",
+      "tech": "Google 発の静的型付け言語。並行処理が書きやすく、単一バイナリで配布できる。Kubernetes や Docker などのインフラ系ソフトウェアやバックエンドの API で使われる。",
+      "outlook": "flat",
+      "reason": "クラウドネイティブな基盤とバックエンドで定着しており、大きく崩れる理由は見当たらない。一方で、性能が要る場面では Rust、手軽さでは TypeScript や Python と競合し、新たに広がる余地も限られる。",
+      "note": "語彙は「golang」と、「go」の後ろに開発系の語が続く場合だけを数える。一般的な英単語の go と区別するため"
+    },
+    "rust": {
+      "label": "Rust",
+      "category": "lang",
+      "tech": "メモリ安全性をコンパイル時に保証するシステムプログラミング言語。C/C++ に近い性能で、OS・ブラウザ・データベース・開発ツールなど性能と安全性の両方が要る場所で使われる。",
+      "outlook": "up",
+      "reason": "メモリ安全でない言語を避ける動きが政府や大企業で進み、C/C++ の置き換え先としての需要が続く。Python や JavaScript の高速なツール群も Rust で書かれることが増えている。",
+      "note": null
+    },
+    "cpp": {
+      "label": "C++",
+      "category": "lang",
+      "tech": "高速なネイティブコードを書くための言語。ゲームエンジン、金融の高頻度取引、組み込み、AI の推論エンジンや GPU カーネルの実装で使われる。",
+      "outlook": "flat",
+      "reason": "AI の推論の高速化やハードウェアに近い層で需要が残る一方、新規のシステムでは Rust が選ばれる場面が増える。両者が打ち消し合って横ばいと見る。",
+      "note": null
+    },
+    "csharp": {
+      "label": "C# / .NET",
+      "category": "lang",
+      "tech": "Microsoft の .NET 上で動く静的型付けの言語。業務システム、Windows アプリ、Azure 上のバックエンド、Unity のゲーム開発で使われる。",
+      "outlook": "flat",
+      "reason": "大企業と Azure の利用企業で安定した需要がある。HN の求人は新興企業に偏り、.NET を使う企業が少ないため、この画面では減っているように見えても市場全体の縮小とは限らない。",
+      "note": null
+    },
+    "ruby": {
+      "label": "Ruby / Rails",
+      "category": "lang",
+      "tech": "書きやすさを重視した動的言語と、その Web フレームワークの Rails。少人数で素早く Web サービスを作るのに向き、GitHub や Shopify などの大規模な利用例がある。",
+      "outlook": "down",
+      "reason": "Rails 自体は改良が続いているが、新しく会社を始めるときの選択肢としては TypeScript や Python に押されている。既存の Rails 資産を保守する需要は残るので、急には消えない。",
+      "note": null
+    },
+    "php": {
+      "label": "PHP / Laravel",
+      "category": "lang",
+      "tech": "Web サーバー側で動く動的言語。WordPress をはじめ Web サイトの多くが PHP で動いている。Laravel が代表的なフレームワーク。",
+      "outlook": "flat",
+      "reason": "既存の Web サイトと EC の保守で大きな需要が続く一方、HN に集まる新興企業ではほとんど選ばれない。市場全体では横ばい、この画面では小さく出る。",
+      "note": null
+    },
+    "swift": {
+      "label": "Swift",
+      "category": "lang",
+      "tech": "Apple の iOS・macOS アプリ向けの言語。SwiftUI と組み合わせて画面を作る。",
+      "outlook": "flat",
+      "reason": "iPhone アプリの市場が成熟していて、大きく増えも減りもしない。React Native などのクロスプラットフォーム開発に置き換わる分と、ネイティブの品質が要る分が拮抗している。",
+      "note": "ios_dev と重なる。iOS 開発の求人は Swift と書かずに iOS とだけ書くことも多い"
+    },
+    "kotlin": {
+      "label": "Kotlin",
+      "category": "lang",
+      "tech": "JVM 上で動く言語で、Android 開発の標準。Java と相互に呼び出せ、サーバー側でも使われる。",
+      "outlook": "flat",
+      "reason": "Android の標準言語として安定している。サーバー側での採用は広がり切らず、Android 市場の成熟と合わせて横ばいと見る。",
+      "note": null
+    },
+    "scala": {
+      "label": "Scala",
+      "category": "lang",
+      "tech": "JVM 上で動く、関数型とオブジェクト指向を組み合わせた言語。Spark や Kafka の周辺、金融のバックエンドで使われてきた。",
+      "outlook": "down",
+      "reason": "Spark の利用が PySpark（Python）中心に移り、Scala を書く必要のある場面が減っている。習得の難しさもあり、新しく採用する理由は少ない。出現数が少ないので、年ごとの分類は揺れやすい。",
+      "note": null
+    },
+    "elixir": {
+      "label": "Elixir",
+      "category": "lang",
+      "tech": "Erlang の仮想マシン（BEAM）上で動く関数型言語。大量の同時接続と障害に強いシステムを作りやすく、Phoenix が代表的な Web フレームワーク。",
+      "outlook": "flat",
+      "reason": "リアルタイム通信などの得意分野では根強く選ばれるが、採用できる人が少ないことが広がりを抑える。ニッチのまま横ばいと見る。",
+      "note": null
+    },
+    "clojure": {
+      "label": "Clojure",
+      "category": "lang",
+      "tech": "JVM 上で動く Lisp 系の関数型言語。不変データを中心に設計し、金融やデータ処理の一部の企業で使われる。",
+      "outlook": "down",
+      "reason": "熱心な利用企業はあるが新規の採用が少なく、AI の支援が効きにくい少数派の言語であることも不利に働く。",
+      "note": null
+    },
+    "haskell": {
+      "label": "Haskell",
+      "category": "lang",
+      "tech": "純粋関数型で強い型システムを持つ言語。金融、ブロックチェーン、コンパイラなど正しさが重視される分野の一部で使われる。",
+      "outlook": "down",
+      "reason": "ブロックチェーン関連の求人の縮小と連動して減りやすい。型による正しさの考え方は他の言語に取り込まれており、Haskell そのものを求める求人は少ないままと見る。",
+      "note": null
+    },
+    "erlang": {
+      "label": "Erlang",
+      "category": "lang",
+      "tech": "通信機器向けに作られた、並行処理と耐障害性に強い言語。メッセージング基盤などで使われ、Elixir と同じ仮想マシンで動く。",
+      "outlook": "flat",
+      "reason": "既存の通信・メッセージング基盤の保守で需要が残るが、新規の採用は Elixir に向かう。求人の数が少なく、変化を読み取れない。",
+      "note": null
+    },
+    "zig": {
+      "label": "Zig",
+      "category": "lang",
+      "tech": "C の代わりを目指すシステムプログラミング言語。C との相互運用がしやすく、JavaScript ランタイムの Bun などで使われている。まだ 1.0 に達していない。",
+      "outlook": "unclear",
+      "reason": "注目は集めているが、正式版の前で仕様が変わり続けており、求人として定着するかはまだ判断できない。",
+      "note": null
+    },
+    "ocaml": {
+      "label": "OCaml",
+      "category": "lang",
+      "tech": "型推論を持つ関数型言語。金融取引の Jane Street や、コンパイラ・形式検証ツールの実装で使われる。",
+      "outlook": "unclear",
+      "reason": "特定の企業と分野に強く結びついていて、市場全体の動きとして読めるほどの求人が無い。",
+      "note": null
+    },
+    "julia": {
+      "label": "Julia",
+      "category": "lang",
+      "tech": "科学技術計算向けの高速な動的言語。数値シミュレーションや最適化で使われる。",
+      "outlook": "down",
+      "reason": "機械学習と数値計算の主戦場が Python（と裏側の C++/Rust）に集まり、Julia を選ぶ理由は研究用途の一部に限られていく。",
+      "note": null
+    },
+    "perl": {
+      "label": "Perl",
+      "category": "lang",
+      "tech": "テキスト処理に強いスクリプト言語。古いシステム管理のスクリプトや Web の初期のシステムに残っている。",
+      "outlook": "down",
+      "reason": "新規の開発ではほぼ使われず、既存のスクリプトは Python などへの置き換えが進む。AI による移行の支援でその速度は上がると見る。",
+      "note": null
+    },
+    "lua": {
+      "label": "Lua",
+      "category": "lang",
+      "tech": "他のソフトウェアに組み込んで使う軽量なスクリプト言語。ゲーム（Roblox など）、Neovim の設定、Nginx の拡張で使われる。",
+      "outlook": "flat",
+      "reason": "組み込み用のスクリプト言語としての役割は安定しているが、主な言語として求人に書かれることは少ない。",
+      "note": null
+    },
+    "sql": {
+      "label": "SQL",
+      "category": "lang",
+      "tech": "リレーショナルデータベースに問い合わせるための言語。データ分析、バックエンド、データ基盤のすべてで使われる。",
+      "outlook": "flat",
+      "reason": "AI が SQL を書けるようになっても、データの構造を理解して結果の正しさを判断する力は残る。基礎的すぎて求人票にわざわざ書かれないことが多く、語としては横ばいと見る。",
+      "note": null
+    },
+
+    "react": {
+      "label": "React",
+      "category": "frontend",
+      "tech": "Meta 発の UI ライブラリ。コンポーネント単位で画面を組み立てる。Web のフロントエンドで最も広く使われ、React Native でモバイルアプリにも使える。",
+      "outlook": "flat",
+      "reason": "すでに主流で、AI の UI 生成ツールの既定にもなっているので地位は揺るがない。ただしすでに行き渡っているため、これ以上大きく広がる余地は小さい。",
+      "note": null
+    },
+    "vue": {
+      "label": "Vue.js",
+      "category": "frontend",
+      "tech": "段階的に導入しやすい UI フレームワーク。テンプレートの書き方が HTML に近く、アジアや欧州の企業で人気がある。",
+      "outlook": "down",
+      "reason": "AI の生成ツールと採用市場の両方が React に集中する中で、新規の選択肢としては選ばれにくくなる。既存の Vue の資産は残る。",
+      "note": null
+    },
+    "angular": {
+      "label": "Angular",
+      "category": "frontend",
+      "tech": "Google 発の、ルーティングや DI まで揃ったフロントエンドのフレームワーク。大企業の業務アプリで使われる。",
+      "outlook": "down",
+      "reason": "Signals の導入など改良は続いているが、新興企業での採用は少なく、React への集中の影響を受ける。大企業の既存システムでは長く残る。",
+      "note": null
+    },
+    "svelte": {
+      "label": "Svelte / SvelteKit",
+      "category": "frontend",
+      "tech": "コンパイル時に UI のコードを最適化するフレームワーク。実行時のライブラリが小さく、書く量も少ない。",
+      "outlook": "flat",
+      "reason": "開発者の満足度は高いが、求人市場では React との差が大きい。AI の生成でも React が既定になりやすく、ニッチのまま横ばいと見る。",
+      "note": null
+    },
+    "nextjs": {
+      "label": "Next.js",
+      "category": "frontend",
+      "tech": "React の上に作られたフルスタックのフレームワーク。サーバー側での描画、ルーティング、API をまとめて提供する。Vercel が開発している。",
+      "outlook": "up",
+      "reason": "React で新しくサービスを作るときの標準の構成になり、AI のアプリ生成ツールもこれを既定にしていることが多い。フロントエンドとバックエンドの境界をまたぐ仕事の入口になる。",
+      "note": null
+    },
+    "tailwind": {
+      "label": "Tailwind CSS",
+      "category": "frontend",
+      "tech": "用途ごとの小さなクラスを組み合わせてスタイルを書く CSS フレームワーク。HTML の中でデザインが完結する。",
+      "outlook": "up",
+      "reason": "クラス名がそのままデザインを表すので AI が生成・修正しやすく、UI 生成ツールの出力の標準になっている。求人票に書かれる語としても広がると見る。",
+      "note": null
+    },
+    "wasm": {
+      "label": "WebAssembly",
+      "category": "frontend",
+      "tech": "ブラウザなどで動く、ネイティブに近い速度のバイナリ形式。C++ や Rust のコードを Web で動かしたり、サーバー側で安全にコードを隔離して動かしたりするのに使う。",
+      "outlook": "flat",
+      "reason": "画像処理や設計ツールなど性能が要る Web アプリで定着したが、一般の Web 開発者が直接書くものにはなっていない。専門性の高いニッチとして横ばいと見る。",
+      "note": null
+    },
+
+    "nodejs": {
+      "label": "Node.js",
+      "category": "backend",
+      "tech": "JavaScript をサーバー側で動かす実行環境。フロントエンドと同じ言語でバックエンドを書ける。",
+      "outlook": "flat",
+      "reason": "TypeScript のバックエンドの標準の実行環境として定着している。Bun や Deno との競争はあるが、求人票の語としては Node.js が使われ続けると見る。",
+      "note": "語彙は「node」を数えるので、Node.js 以外の意味（ノード）の一部も入りうる"
+    },
+    "django": {
+      "label": "Django",
+      "category": "backend",
+      "tech": "Python の Web フレームワーク。管理画面や ORM など多くの機能が最初から揃っている。",
+      "outlook": "flat",
+      "reason": "Python で Web サービスを作る定番として安定している。API だけを作る場面では FastAPI に押されるが、AI 関連のサービスが Python で作られる流れが下支えする。",
+      "note": null
+    },
+    "spring": {
+      "label": "Spring",
+      "category": "backend",
+      "tech": "Java のアプリケーションフレームワーク。Spring Boot で設定を減らし、大企業のバックエンドで広く使われる。",
+      "outlook": "flat",
+      "reason": "Java の業務システムの標準で、大企業の需要は安定している。HN の求人にはほとんど出てこないため、この画面の値は市場の実態を反映しにくい。",
+      "note": "語彙は「spring boot」「spring framework」だけを数えるので、Spring とだけ書いた求人は入らない"
+    },
+    "graphql": {
+      "label": "GraphQL",
+      "category": "backend",
+      "tech": "クライアントが必要なデータの形を指定して取得する API の問い合わせ言語。REST の代わりとして、画面ごとに必要なデータが違うアプリで使われる。",
+      "outlook": "down",
+      "reason": "運用の複雑さに対して得られる利点が小さい場面が多いと分かり、REST や型付きの RPC（tRPC など）に戻る動きがある。大規模な利用企業では残る。",
+      "note": null
+    },
+    "grpc": {
+      "label": "gRPC",
+      "category": "backend",
+      "tech": "Google 発の高速な RPC の仕組み。Protocol Buffers で型を定義し、マイクロサービス間の通信で使われる。",
+      "outlook": "flat",
+      "reason": "サービス間の内部通信の選択肢として定着しているが、求人票に書かれるほど目立つ技術ではない。",
+      "note": null
+    },
+    "postgres": {
+      "label": "PostgreSQL",
+      "category": "backend",
+      "tech": "オープンソースのリレーショナルデータベース。JSON、全文検索、拡張機能（pgvector によるベクトル検索など）が充実している。",
+      "outlook": "up",
+      "reason": "ベクトル検索や JSON を含めて1つの DB で済ませられるので、専用の DB を増やさない流れの中心にいる。多くのクラウドやサーバーレス DB の基盤にもなっている。",
+      "note": null
+    },
+    "mysql": {
+      "label": "MySQL / MariaDB",
+      "category": "backend",
+      "tech": "広く使われてきたオープンソースのリレーショナルデータベース。Web サービスの初期から多くのシステムの基盤になっている。",
+      "outlook": "down",
+      "reason": "既存システムでは長く使われるが、新規の採用は機能の多い PostgreSQL に移っている。",
+      "note": null
+    },
+    "mongodb": {
+      "label": "MongoDB",
+      "category": "backend",
+      "tech": "JSON に近い形でデータを保存するドキュメント型のデータベース。スキーマを決めずに書き込める。",
+      "outlook": "down",
+      "reason": "PostgreSQL の JSON 機能で足りる場面が増え、スキーマの無さが後で負債になる経験も広まった。既存の利用は残るが、新規で選ぶ理由は減る。",
+      "note": null
+    },
+    "redis": {
+      "label": "Redis",
+      "category": "backend",
+      "tech": "メモリ上で動く高速なキーバリューストア。キャッシュ、セッション、キュー、ランキングなどに使う。",
+      "outlook": "flat",
+      "reason": "キャッシュの標準として必要とされ続ける。ライセンス変更をきっかけに Valkey などの互換の派生が生まれたが、求人票では Redis という名前で書かれ続けると見る。",
+      "note": null
+    },
+    "elasticsearch": {
+      "label": "Elasticsearch / OpenSearch",
+      "category": "backend",
+      "tech": "全文検索とログ分析のための分散検索エンジン。サイト内検索やログの可視化で使われる。",
+      "outlook": "flat",
+      "reason": "ログ分析と全文検索で定着しているが、ベクトル検索では専用の DB や PostgreSQL と競合する。守りと攻めが打ち消し合って横ばいと見る。",
+      "note": "語彙は「elastic」も数えるので、Elastic 社の他製品や一般的な意味の elastic も入りうる"
+    },
+
+    "kafka": {
+      "label": "Kafka",
+      "category": "data",
+      "tech": "大量のイベントを順序付きで流して蓄積する分散メッセージング基盤。サービス間のデータ連携やリアルタイム処理の土台になる。",
+      "outlook": "flat",
+      "reason": "リアルタイムのデータ連携の標準として大企業では必要とされ続けるが、中小規模ではマネージドサービスや単純なキューで足りることが多い。",
+      "note": null
+    },
+    "spark": {
+      "label": "Apache Spark",
+      "category": "data",
+      "tech": "大量のデータを複数台のマシンで分散処理するエンジン。Databricks の基盤でもある。",
+      "outlook": "down",
+      "reason": "1台で十分速い分析エンジン（DuckDB など）とデータウェアハウスの性能向上で、Spark を直接書く必要のある場面が減る。語としては Databricks などの製品名に置き換わっていく。",
+      "note": "語彙は「spark」を数えるので、一般的な意味の spark も入りうる"
+    },
+    "snowflake": {
+      "label": "Snowflake",
+      "category": "data",
+      "tech": "クラウドで提供されるデータウェアハウス。保存と計算を分けて伸縮でき、SQL で分析する。",
+      "outlook": "flat",
+      "reason": "企業のデータ基盤の選択肢として定着しているが、Databricks や BigQuery との競争が激しい。",
+      "note": null
+    },
+    "dbt": {
+      "label": "dbt",
+      "category": "data",
+      "tech": "データウェアハウスの中での変換処理を SQL で書き、テストやドキュメントと一緒に管理するツール。",
+      "outlook": "flat",
+      "reason": "分析基盤で SQL の変換を管理する標準の道具になっている。Fivetran との統合など提供側の再編はあるが、使う仕事の量は大きく変わらないと見る。",
+      "note": null
+    },
+    "clickhouse": {
+      "label": "ClickHouse",
+      "category": "data",
+      "tech": "列指向の高速な分析用データベース。大量のログやイベントを集計する用途で使われる。",
+      "outlook": "up",
+      "reason": "LLM アプリの観測データや製品分析のように、大量のイベントを安く速く集計する需要が増えている。",
+      "note": null
+    },
+    "duckdb": {
+      "label": "DuckDB",
+      "category": "data",
+      "tech": "手元のプロセスの中で動く分析用データベース。サーバー不要で、Parquet や CSV を直接 SQL で集計できる。",
+      "outlook": "up",
+      "reason": "分散処理を組まずに済む規模の分析が多いことが広く認識され、データ基盤の軽量化の中心になっている。",
+      "note": null
+    },
+    "airflow": {
+      "label": "Airflow / Dagster / Prefect",
+      "category": "data",
+      "tech": "データ処理の手順（ワークフロー）を定義し、定期実行と依存関係を管理するツール群。",
+      "outlook": "flat",
+      "reason": "データ基盤の定番の部品として必要とされ続ける。AI のデータ準備の仕事で使われる場面も増えるが、語としては大きく変わらないと見る。",
+      "note": null
+    },
+
+    "aws": {
+      "label": "AWS",
+      "category": "infra",
+      "tech": "Amazon のクラウドサービス。計算・保存・データベース・AI などを従量課金で提供する。シェアが最も大きい。",
+      "outlook": "flat",
+      "reason": "クラウドの前提の技術で、求人票の語としてはすでに行き渡っている。大きく増える理由も減る理由も見当たらない。",
+      "note": null
+    },
+    "gcp": {
+      "label": "Google Cloud",
+      "category": "infra",
+      "tech": "Google のクラウドサービス。BigQuery などのデータ分析と、Gemini や TPU などの AI の基盤に強い。",
+      "outlook": "flat",
+      "reason": "AI とデータ分析の用途で選ばれる場面はあるが、シェアの構図は大きく変わらないと見る。",
+      "note": null
+    },
+    "azure": {
+      "label": "Azure",
+      "category": "infra",
+      "tech": "Microsoft のクラウドサービス。大企業の Microsoft 製品との連携と、OpenAI のモデルの提供に強い。",
+      "outlook": "flat",
+      "reason": "大企業での利用は安定しているが、HN の求人は新興企業に偏るのでこの画面では小さく出る。",
+      "note": null
+    },
+    "kubernetes": {
+      "label": "Kubernetes",
+      "category": "infra",
+      "tech": "コンテナを複数のマシンにまたがって配置・伸縮・復旧させる基盤。クラウドネイティブなシステムの標準になっている。",
+      "outlook": "flat",
+      "reason": "中規模以上のシステムでは前提になった。一方で、小さなチームではマネージドなサーバーレスやPaaSで済ませる流れもあり、横ばいと見る。GPU クラスタの運用では新しい需要がある。",
+      "note": null
+    },
+    "docker": {
+      "label": "Docker",
+      "category": "infra",
+      "tech": "アプリケーションと実行環境をコンテナとしてまとめる仕組み。開発環境と本番環境の差をなくす。",
+      "outlook": "flat",
+      "reason": "開発の前提の道具になっていて、わざわざ求人票に書く意味が薄れていく。AI エージェントにコードを実行させる隔離環境としての用途は増えている。",
+      "note": null
+    },
+    "terraform": {
+      "label": "Terraform / Pulumi",
+      "category": "infra",
+      "tech": "クラウドの構成をコードで定義して作成・変更するツール（Infrastructure as Code）。",
+      "outlook": "flat",
+      "reason": "クラウドの構成管理の標準で、AI が定義を書けるようになっても、変更の安全性を判断する人は要る。ライセンス変更で OpenTofu への分岐が起きたが、求人の語としては Terraform が続くと見る。",
+      "note": null
+    },
+    "linux": {
+      "label": "Linux / Unix",
+      "category": "infra",
+      "tech": "サーバーの標準の OS。コマンドライン、権限、ネットワーク、プロセスの理解は、インフラとバックエンドの基礎になる。",
+      "outlook": "flat",
+      "reason": "基礎的な素養として必要であり続けるが、クラウドのマネージドサービスで直接触る場面は減っている。",
+      "note": null
+    },
+
+    "llm": {
+      "label": "LLM",
+      "category": "ai",
+      "tech": "大規模言語モデル。大量の文章で学習し、文章の生成・要約・分類・コード生成などを行う。多くの会社は自前で作らず API で呼び出して使う。",
+      "outlook": "up",
+      "reason": "LLM を製品や業務に組み込む仕事は、まだ多くの会社で始まったばかりで広がる余地が大きい。ただし当たり前になるほど語として書かれなくなるので、数年先には横ばいに転じうる。",
+      "note": null
+    },
+    "ai_generic": {
+      "label": "AI（語としての言及）",
+      "category": "ai",
+      "tech": "求人票に「AI」「artificial intelligence」という語が現れたかどうか。特定の技術ではなく、製品の説明や会社の紹介文での言及も含む。",
+      "outlook": "unclear",
+      "reason": "スキルの需要ではなく、AI という語を使う求人の割合を表す。宣伝文句として使われる分が多く、今後の見立てを立てる対象にしない。",
+      "note": "言及であってスキルではない。「必要性が増す／下がる」のまとめには入れない"
+    },
+    "machine_learning": {
+      "label": "機械学習",
+      "category": "ai",
+      "tech": "データから規則を学習して予測や分類を行う技術の総称。需要予測、推薦、不正検知などで LLM 以前から使われている。",
+      "outlook": "flat",
+      "reason": "推薦や不正検知などの従来型の機械学習は業務に定着していて減らないが、新しい需要は LLM 関連の語で書かれるようになる。語としては横ばいと見る。",
+      "note": "語彙は「ml」も数える"
+    },
+    "deep_learning": {
+      "label": "ディープラーニング",
+      "category": "ai",
+      "tech": "多層のニューラルネットワークで学習する機械学習の手法。画像認識や音声認識、LLM の基礎になっている。",
+      "outlook": "down",
+      "reason": "技術としては LLM を含めて使われ続けるが、求人票の語としては LLM や生成 AI などの具体的な呼び名に置き換わっていく。",
+      "note": null
+    },
+    "pytorch": {
+      "label": "PyTorch",
+      "category": "ai",
+      "tech": "Meta 発の深層学習のフレームワーク。研究と本番の両方で使われ、多くのオープンなモデルが PyTorch で公開されている。",
+      "outlook": "up",
+      "reason": "モデルの学習・微調整・推論の最適化で事実上の標準になっている。モデルを扱う仕事の量が増えるほど使われる。",
+      "note": null
+    },
+    "tensorflow": {
+      "label": "TensorFlow / Keras / JAX",
+      "category": "ai",
+      "tech": "Google 発の深層学習のフレームワーク群。TensorFlow は本番環境や端末での推論、JAX は大規模な研究で使われる。",
+      "outlook": "down",
+      "reason": "研究と新規開発の中心が PyTorch に移り、TensorFlow は既存システムの保守が主になる。JAX は一部の研究組織に限られる。",
+      "note": null
+    },
+    "nlp": {
+      "label": "自然言語処理（NLP）",
+      "category": "ai",
+      "tech": "人の言葉をコンピュータで扱う技術の分野。文書分類、情報抽出、翻訳、検索などを含む。",
+      "outlook": "down",
+      "reason": "LLM が多くの自然言語処理の課題をまとめて解くようになり、求人票では NLP より LLM という語が使われるようになる。分野としての仕事は無くならない。",
+      "note": null
+    },
+    "computer_vision": {
+      "label": "コンピュータビジョン",
+      "category": "ai",
+      "tech": "画像や動画から物体や状況を認識する技術。製造の検査、自動運転、医療画像、ロボットで使われる。",
+      "outlook": "flat",
+      "reason": "ロボティクスや自動運転での需要は続くが、画像も扱える汎用のモデルが出て、専用のモデルを作る仕事の一部を置き換える。",
+      "note": null
+    },
+    "rag": {
+      "label": "RAG（検索拡張生成）",
+      "category": "ai",
+      "tech": "質問に関係する文書を検索して LLM に渡し、その内容に基づいて回答させる手法。社内文書を使った質問応答などで使われる。",
+      "outlook": "up",
+      "reason": "社内データを LLM とつなぐ仕事はまだ多くの会社で始まったばかり。ただし語としては、エージェントや「コンテキストの設計」といったより広い呼び名に吸収されていく可能性がある。",
+      "note": null
+    },
+    "ai_agents": {
+      "label": "AI エージェント / MCP",
+      "category": "ai",
+      "tech": "LLM がツールを呼び出しながら、複数の手順を自律的に進める仕組み。MCP（Model Context Protocol）は、LLM と外部のツールやデータをつなぐための共通の規格。",
+      "outlook": "up",
+      "reason": "LLM の使い方が「質問に答える」から「作業を任せる」に移っていて、その設計・評価・安全対策の仕事が増える。MCP のような共通規格が広まるほど、既存のシステムをエージェントから使えるようにする仕事も増える。",
+      "note": "語彙は「agent」単独は数えず、framework や workflow などが続く場合だけを数える"
+    },
+    "prompt_eng": {
+      "label": "プロンプトエンジニアリング",
+      "category": "ai",
+      "tech": "LLM への指示文を工夫して、望む出力を安定して得る技術。",
+      "outlook": "down",
+      "reason": "LLM を使う人すべてに必要な基礎的な素養になり、独立したスキル名として求人票に書かれることは減る。仕事の中身は評価やエージェントの設計に吸収される。",
+      "note": null
+    },
+    "transformers": {
+      "label": "Transformer / Hugging Face",
+      "category": "ai",
+      "tech": "LLM の基礎になっているニューラルネットワークの構造と、そのモデルを公開・共有する Hugging Face のライブラリと基盤。",
+      "outlook": "flat",
+      "reason": "オープンなモデルを自前で動かす・微調整する仕事では必要だが、多くの会社は API で済ませる。一定の専門層の需要として横ばいと見る。",
+      "note": null
+    },
+    "langchain": {
+      "label": "LangChain / LlamaIndex",
+      "category": "ai",
+      "tech": "LLM を使ったアプリケーション（RAG やエージェント）を組み立てるためのライブラリ。",
+      "outlook": "down",
+      "reason": "初期には LLM アプリの定番の部品だったが、各社の SDK やエージェントの機能が充実し、抽象化の層を挟まずに直接書く選択が増えている。特定のフレームワーク名が求人票に書かれることは減ると見る。",
+      "note": null
+    },
+    "finetuning": {
+      "label": "ファインチューニング",
+      "category": "ai",
+      "tech": "既存のモデルを自社のデータで追加学習させ、特定の用途に合わせる技術。RLHF（人の評価を使った強化学習）や PEFT（少ない計算量での調整）を含む。",
+      "outlook": "flat",
+      "reason": "特定の用途での精度や費用の最適化で必要とされるが、多くの場合はプロンプトや検索との組み合わせで足りるため、担う人は一部に限られる。",
+      "note": "語彙は「fine tun」で始まる語を数える（fine-tuning、fine tuned など）"
+    },
+    "mlops": {
+      "label": "MLOps",
+      "category": "ai",
+      "tech": "機械学習のモデルを本番で動かし続けるための運用の技術。学習の管理、モデルの配信、特徴量の管理、監視を含む。LLM では評価や監視を指して LLMOps とも呼ぶ。",
+      "outlook": "up",
+      "reason": "LLM を本番で使う会社が増えるほど、出力の品質の評価、費用、障害の監視の仕事が増える。語は LLMOps や評価（evals）に分かれていく可能性がある。",
+      "note": null
+    },
+    "vector_db": {
+      "label": "ベクトル DB / 埋め込み",
+      "category": "ai",
+      "tech": "文章や画像を数値のベクトル（埋め込み）に変換して保存し、意味の近いものを検索するデータベース。Pinecone、Weaviate、pgvector など。",
+      "outlook": "flat",
+      "reason": "意味検索の需要は続くが、専用の DB より PostgreSQL などの既存の DB の機能で済ませる流れがあり、独立したスキルとしては広がりにくい。",
+      "note": null
+    },
+    "openai_api": {
+      "label": "OpenAI API",
+      "category": "ai",
+      "tech": "OpenAI の GPT シリーズなどのモデルを呼び出す API と、ChatGPT。",
+      "outlook": "flat",
+      "reason": "LLM を使うアプリの多くが使うが、複数の提供元を切り替えて使う設計が広まり、特定の会社名を求人票に書く意味は薄れていく。",
+      "note": null
+    },
+    "anthropic_api": {
+      "label": "Anthropic API / Claude",
+      "category": "ai",
+      "tech": "Anthropic の Claude シリーズのモデルを呼び出す API と、コーディング支援の Claude Code など。",
+      "outlook": "up",
+      "reason": "コード生成とエージェントの用途で採用が広がっていて、開発の道具として求人票に書かれる場面が増えると見る。ただし執筆者は Anthropic のモデルであり、この項目の見立てには利害の偏りがありうる。",
+      "note": "執筆者（Claude）自身に関わる項目"
+    },
+    "copilot": {
+      "label": "AI コーディング支援",
+      "category": "ai",
+      "tech": "GitHub Copilot や Cursor など、エディタの中でコードの補完・生成・修正を行う道具。",
+      "outlook": "up",
+      "reason": "使いこなせることが開発者の前提として求人票に書かれるようになっている。数年先には当たり前すぎて書かれなくなる可能性もある。",
+      "note": "語彙は「cursor」を、後ろに ide や editor が続く場合だけ数える"
+    },
+
+    "blockchain": {
+      "label": "ブロックチェーン / Web3",
+      "category": "platform",
+      "tech": "改ざんしにくい分散型の台帳の技術と、その上で動くスマートコントラクト（Solidity など）。暗号資産や金融の決済で使われる。",
+      "outlook": "down",
+      "reason": "求人の数は暗号資産の相場の波に強く連動する。ステーブルコインなど決済の用途は残るが、技術者の需要としては長期的に縮小すると見る。",
+      "note": null
+    },
+    "embedded": {
+      "label": "組み込み / ファームウェア",
+      "category": "platform",
+      "tech": "機器の中に組み込まれて動くソフトウェア。マイコン、リアルタイム OS、FPGA を扱う。",
+      "outlook": "up",
+      "reason": "ロボティクス、端末側での AI 推論、防衛・エネルギー・宇宙分野の投資で需要が続く。実機での検証が要るため、AI によるコード生成の影響を受けにくい。",
+      "note": null
+    },
+    "ios_dev": {
+      "label": "iOS 開発",
+      "category": "platform",
+      "tech": "iPhone・iPad 向けのアプリ開発。Swift と SwiftUI、以前は Objective-C を使う。",
+      "outlook": "flat",
+      "reason": "アプリ市場が成熟していて、大きく増えも減りもしない。クロスプラットフォームの開発に置き換わる分と、ネイティブの品質が要る分が拮抗している。",
+      "note": null
+    },
+    "android_dev": {
+      "label": "Android 開発",
+      "category": "platform",
+      "tech": "Android 端末向けのアプリ開発。Kotlin と Jetpack Compose を使う。",
+      "outlook": "flat",
+      "reason": "iOS と同じく成熟した市場で、横ばいと見る。",
+      "note": null
+    },
+    "unity": {
+      "label": "ゲームエンジン（Unity / Unreal / Godot）",
+      "category": "platform",
+      "tech": "ゲームやリアルタイム 3D の開発環境。ゲームのほか、シミュレーション、建築の可視化、XR でも使われる。",
+      "outlook": "flat",
+      "reason": "ゲーム業界の人員削減の影響が続く一方、ロボットの学習用のシミュレーションなどの用途が増え、全体では横ばいと見る。",
+      "note": "語彙は「unity」を数えるので、一般的な意味の unity も入りうる"
+    },
+
+    "testing": {
+      "label": "テスト自動化",
+      "category": "process",
+      "tech": "ユニットテストや E2E テストを自動で実行し、変更が既存の動作を壊していないか確かめる仕組み。Jest、pytest、Playwright、Cypress など。",
+      "outlook": "up",
+      "reason": "AI が書くコードが増えるほど、人が読まずに正しさを確かめる手段としてテストの価値が上がる。AI エージェントに作業を任せるときの前提条件にもなる。",
+      "note": null
+    },
+    "cicd": {
+      "label": "CI/CD",
+      "category": "process",
+      "tech": "変更のたびにビルド・テスト・デプロイを自動で行う仕組み。GitHub Actions や Jenkins など。",
+      "outlook": "up",
+      "reason": "変更の量が AI で増えるほど、それを安全に取り込んで出す自動化の重要性が上がる。語としては当たり前になりやすく、求人票の値は実際の重要度より小さく出る。",
+      "note": null
+    }
+  }
+}

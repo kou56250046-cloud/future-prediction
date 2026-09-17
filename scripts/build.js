@@ -13,7 +13,12 @@ import {
   lineChart, stackedArea, bandChart, sparkline, scatter, barChart, reliabilityDiagram,
   legend, esc, FORMATTERS,
 } from './lib/svg.js';
-import { page, section, figure, tile, tiles, table } from './lib/html.js';
+import { page, section, figure, tile, tiles, table, tabs, TAB_SCRIPT } from './lib/html.js';
+import { guideBody } from './lib/guide.js';
+import {
+  skillTrends, disagrees, isStale, skillTerms, TREND_LABELS,
+  MIN_COUNT, Z, REL_UP, REL_SURGE, REL_PLUNGE, STALE_DAYS,
+} from './lib/skill-trend.js';
 import {
   indexMetrics as indexForLedger, evaluateResolver, readPredictions, readResolutions,
   joinLedger, scorable, upcoming,
@@ -25,7 +30,17 @@ import {
 import {
   MONTHLY_METRICS_PATH, QUARTERLY_METRICS_PATH, INDEX_HTML_PATH, DIST_DIR,
   METRICS_CONFIG_PATH, COLLECT_STATUS_PATH, AI_DB_PATH, AI_RAW_DIR,
+  SKILL_GUIDE_PATH, TAXONOMY_PATH,
 } from './lib/paths.js';
+
+/**
+ * ダッシュボードタブに並ぶブロックの id。この順で並べる。
+ * 見方タブのリンク先はこの部分集合でなければならない（test/skill-guide.test.js で検査）
+ */
+export const DASHBOARD_BLOCK_IDS = [
+  'scoreboard', 'bias', 'reliability', 'upcoming', 'ledger',
+  'summary', 'jobs', 'skills', 'ai', 'cross', 'quality',
+];
 
 /** 指標の描画をここより前に遡らない。母数が小さく語彙も違うため */
 const DISPLAY_FROM = '2015-01';
@@ -140,9 +155,9 @@ function biasBlock(done, bias, strata) {
 
   const parts = [
     `<p style="font-size:15px;margin:2px 0 14px">${esc(bias.text)}</p>`,
-    `<h3 style="font-size:13px;margin:16px 0 4px">ホライズン別 — 「短期は当たるが長期で外す」が出るならここ</h3>`,
+    `<h3>ホライズン別 — 「短期は当たるが長期で外す」が出るならここ</h3>`,
     `<div class="scroll">${stratTable(strata.horizon)}</div>`,
-    `<h3 style="font-size:13px;margin:18px 0 4px">タグ別 — adoption の差が正なら、普及を早く見積もっている</h3>`,
+    `<h3>タグ別 — adoption の差が正なら、普及を早く見積もっている</h3>`,
     `<div class="scroll">${stratTable(strata.tag)}</div>`,
     `<details><summary>カテゴリ別と自信度別</summary>`,
     `<div class="scroll">${stratTable(strata.category)}</div>`,
@@ -393,10 +408,11 @@ function skillsBlock(mi, monthPeriods) {
   };
 
   const body = [
-    `<p class="sub">直近月（${esc(latest)}）の出現率と、前年同月からの変化。スパークラインは ${esc(monthPeriods[0])} 以降</p>`,
-    `<h3 style="font-size:13px;margin:14px 0 4px">伸びているもの</h3>`,
+    `<p class="sub">直近月（${esc(latest)}）の出現率と、前年同月からの変化。スパークラインは ${esc(monthPeriods[0])} 以降。`
+    + `月次は揺れが大きいので、4四半期ずつ比べた分類と今後の見立ては <a href="#skill-outlook">スキル解説</a> タブを見る</p>`,
+    `<h3>伸びているもの</h3>`,
     `<div class="grid-cards">${rising.map(card).join('')}</div>`,
-    `<h3 style="font-size:13px;margin:18px 0 4px">減っているもの</h3>`,
+    `<h3>減っているもの</h3>`,
     `<div class="grid-cards">${falling.map(card).join('')}</div>`,
     `<details><summary>出現率の多い順に20件</summary><div class="scroll">`,
     table(['スキル', '出現率', '前年同月差'],
@@ -592,6 +608,265 @@ function qualityBlock(mi, monthPeriods, status) {
   });
 }
 
+// ───────────────────────── スキル解説タブ ─────────────────────────
+//
+// データ（過去の変化の分類）と見立て（執筆者の考え）を画面の上でも分ける。
+// 見立ては config/skill-guide.json の手書きで、ここではそれを並べるだけ。
+// 数値と「伸びた/減った」はここで計算して出し、手書きの文章には書かせない。
+
+const OUTLOOK_LABELS = { up: '増える', down: '減る', flat: '横ばい', unclear: '不明' };
+const TREND_ORDER = ['surge', 'up', 'flat', 'down', 'plunge', 'insufficient'];
+
+const trendBadge = (t) => (t
+  ? `<span class="trend t-${esc(t.label)}">${esc(TREND_LABELS[t.label])}</span>`
+  : `<span class="trend t-insufficient">データなし</span>`);
+const outlookBadge = (o) => `<span class="outlook o-${esc(o)}">${esc(OUTLOOK_LABELS[o] ?? o)}</span>`;
+const mismatchMark = `<span class="mismatch" title="見立ての向きと、直近1年のデータの向きが逆">データと食い違い</span>`;
+const spanText = (w) => (w ? `${w.from}〜${w.to}` : '—');
+
+/** 変化量の表記。pt と相対変化 */
+function deltaText(t) {
+  if (!t || t.deltaPt === null) return '—';
+  const pt = `${t.deltaPt >= 0 ? '+' : ''}${(t.deltaPt * 100).toFixed(1)}pt`;
+  const rel = !Number.isFinite(t.rel) ? '前の窓で0件' : `相対 ${t.rel >= 0 ? '+' : ''}${Math.round(t.rel * 100)}%`;
+  return `${pt}（${rel}）`;
+}
+
+/** 1年の分類ごとの件数 */
+function trendCounts(entries) {
+  const counts = Object.fromEntries(TREND_ORDER.map((k) => [k, 0]));
+  for (const t of entries) if (t) counts[t.oneYear.label]++;
+  return counts;
+}
+
+/** 見立てと直近1年のデータの向きが逆なら印を返す */
+const mismatchFor = (s, t) => (s && t && disagrees(s.outlook, t.oneYear) ? ` ${mismatchMark}` : '');
+
+/** 1. 読み方。比べた期間・完了四半期の根拠・分類の基準 */
+function soHowto({ windows, basis, stalledAt }) {
+  return section({
+    id: 'so-howto',
+    title: 'この解説の読み方',
+    body: `<p>このタブには性質の違う2種類の情報が並んでいます。</p>
+<ul>
+<li><strong>データ</strong> — 求人票での出現率を比べた、過去の変化の分類（急伸・伸び・横ばい・減少・急減・件数不足）。ビルドのたびに計算し直します</li>
+<li><strong>見立て</strong> — 今後そのスキルの必要性が増えるか減るかについての執筆者の考え（増える・減る・横ばい・不明）。手で書いた文章で、データではありません</li>
+</ul>
+<p>「直近1年」は <strong>${esc(spanText(windows.recent))}</strong> と <strong>${esc(spanText(windows.prior))}</strong>、「3年」は直近と <strong>${esc(spanText(windows.past3))}</strong> を比べています。
+4四半期ずつ束ねるのは季節による揺れを消すためです。
+${basis === 'collected'
+    ? '収集が月末まで済んだ四半期だけを使い、集計途中の四半期は含めていません。'
+    : '<strong>収集状態のファイルが無いため、ビルド日だけで完了した四半期を判断しています。</strong>最後の四半期が集計途中の可能性があります。'}</p>
+${stalledAt
+    ? `<p class="stale">${esc(stalledAt)} は日付では終わっていますが、月末より前に取ったきりの月があるため、そこから先を比較に使っていません。<code>npm run sync</code> で取り直すと進みます。</p>`
+    : ''}
+<p>差が「ある」と言うのは、2つの窓の出現件数が合わせて ${MIN_COUNT} 件以上あり、比率の差が統計的にはっきりしていて（z ≥ ${Z}）、相対的にも ${Math.round(REL_UP * 100)}% 以上動いたときだけです。
+急伸は相対 +${Math.round(REL_SURGE * 100)}% 以上、急減は ${Math.round(REL_PLUNGE * 100)}% 以下です。</p>
+<p class="footnote">ダッシュボードの「スキルの需要」は直近月の前年同月差で並べているので、ここと顔ぶれが違うことがあります。直近月は月の途中で件数が少なく、揺れが大きいためです。傾向を読むときはこちらを見てください。</p>`,
+  });
+}
+
+/** 2. まとめ。執筆者の表示・古さの警告・増す/下がるの2列・総論 */
+function soSummary(guide, byKey, asOf) {
+  const attribution = `<p class="attribution">${esc(guide.author ?? 'Claude（LLM）')}が書いた見立て／知識は ${esc(knowledgeLabel(guide.knowledgeAsOf))}まで／予測台帳で採点されていない／執筆日 ${esc(guide.writtenAt ?? '—')}</p>`
+    + (isStale(guide.writtenAt, asOf)
+      ? `<p class="stale">この見立ては執筆から ${STALE_DAYS} 日以上たっています。データの分類と照らし合わせ、<code>config/skill-guide.json</code> を見直してください。</p>`
+      : '');
+  const summaryItem = (k) => {
+    const s = guide.skills[k];
+    const t = byKey.get(k);
+    return `<li><a href="#so-skill-${esc(k)}">${esc(s?.label ?? k)}</a> ${trendBadge(t?.oneYear)}${mismatchFor(s, t)}</li>`;
+  };
+  return section({
+    id: 'so-summary',
+    title: 'まとめ — 今後の見立て',
+    sub: '横のラベルは直近1年のデータの分類。見立てと逆向きのものには印を付けている',
+    body: `${attribution}
+<div class="so-columns">
+<div><h3>必要性が増すと見るスキル</h3><ul class="so-list">${(guide.summary?.rising ?? []).map(summaryItem).join('')}</ul></div>
+<div><h3>必要性が下がると見るスキル</h3><ul class="so-list">${(guide.summary?.falling ?? []).map(summaryItem).join('')}</ul></div>
+</div>
+<h3>総論</h3>
+<p>${esc(guide.summary?.text ?? '')}</p>`,
+    footnote: '「下がる」は求人票にその語が書かれなくなることを含む。仕事そのものが無くなるとは限らない',
+  });
+}
+
+/** 3. データで見た変化。1年の分類ごとの件数タイル */
+function soData(rows, windows) {
+  const all = trendCounts(rows.map((r) => r.t));
+  const listOf = (label) => rows.filter((r) => r.t?.oneYear.label === label)
+    .map((r) => r.s?.label ?? r.k).join('、') || '—';
+  return section({
+    id: 'so-data',
+    title: 'データで見た変化 — 直近1年',
+    sub: `${spanText(windows.recent)} と ${spanText(windows.prior)} の比較。語彙の ${rows.length} スキルすべて`,
+    body: tiles(TREND_ORDER.map((label) => tile({
+      k: TREND_LABELS[label],
+      v: `${all[label]}`,
+      n: label === 'flat' ? '' : listOf(label),
+      tone: '',
+    }))),
+    footnote: '分類は出現率の比較であって、求人の総数の増減ではない。求人票1件あたりに書かれるスキルの数が増えると、全体の出現率が上がって見えることがある',
+  });
+}
+
+/** カテゴリ内のスキルの一覧表 */
+function soSkillTable(inCat) {
+  return `<div class="scroll"><table class="so-table"><thead><tr>
+<th>スキル</th><th>出現率（直近4四半期）</th><th>直近1年</th><th>3年</th><th>形</th><th>見立て</th>
+</tr></thead><tbody>${inCat.map(({ k, s, t }) => `<tr>
+<td><a href="#so-skill-${esc(k)}">${esc(s?.label ?? k)}</a></td>
+<td>${esc(FORMATTERS.share(t?.oneYear.recent?.p ?? null))}</td>
+<td>${trendBadge(t?.oneYear)}</td>
+<td>${trendBadge(t?.threeYear)}</td>
+<td>${esc(t?.shape ?? '—')}</td>
+<td>${s ? outlookBadge(s.outlook) : '解説未執筆'}${mismatchFor(s, t)}</td>
+</tr>`).join('')}</tbody></table></div>`;
+}
+
+/** 1スキルの折りたたみ。技術・見立て・数えている語・窓ごとの件数 */
+function soSkillDetail({ k, s, t }, taxonomy) {
+  const terms = skillTerms(taxonomy?.skills?.[k] ?? [])
+    .map((term) => (term.raw ? `<code>${esc(term.text)}</code>` : esc(term.text))).join('、');
+  const w = (tr, name) => (tr?.base
+    ? `<tr><td>${name}</td><td>${esc(spanText(tr.base))}</td><td>${esc(FORMATTERS.share(tr.base.p))}</td><td>${esc(`${tr.base.c} / ${tr.base.n}`)}</td><td>${esc(deltaText(tr))}</td></tr>`
+    : '');
+  const recent = t?.oneYear.recent;
+  return `<details class="so-skill" id="so-skill-${esc(k)}">
+<summary><span class="so-skill-name">${esc(s?.label ?? k)}</span> ${trendBadge(t?.oneYear)} ${s ? outlookBadge(s.outlook) : ''}${mismatchFor(s, t)}</summary>
+<dl>
+<dt>技術</dt><dd>${esc(s?.tech ?? '解説未執筆')}</dd>
+<dt>見立て</dt><dd>${s ? `${outlookBadge(s.outlook)} ${esc(s.reason)}` : '解説未執筆'}</dd>
+${s?.note ? `<dt>注記</dt><dd>${esc(s.note)}</dd>` : ''}
+<dt>数えている語</dt><dd>${terms || '—'}</dd>
+<dt>データ</dt><dd>${recent ? `<div class="scroll"><table>
+<thead><tr><th>比較</th><th>期間</th><th>出現率</th><th>出現数 / 求人数</th><th>直近との差</th></tr></thead>
+<tbody><tr><td>直近</td><td>${esc(spanText(recent))}</td><td>${esc(FORMATTERS.share(recent.p))}</td><td>${esc(`${recent.c} / ${recent.n}`)}</td><td>—</td></tr>
+${w(t.oneYear, '1年前')}${w(t.threeYear, '3年前')}</tbody></table></div>
+<p class="footnote">形: ${esc(t.shape)}</p>` : 'データなし'}</dd>
+</dl>
+</details>`;
+}
+
+/** 4. カテゴリ1つ分。自動の件数 → 手書きの総論 → 表 → スキルごとの解説 */
+function soCategory(catKey, cat, inCat, taxonomy) {
+  const counts = trendCounts(inCat.map((r) => r.t));
+  const countLine = TREND_ORDER.filter((l) => counts[l] > 0)
+    .map((l) => `${TREND_LABELS[l]} ${counts[l]}`).join(' ／ ');
+  return section({
+    id: `so-cat-${catKey}`,
+    title: cat.label,
+    sub: `直近1年のデータ: ${countLine}`,
+    body: `<p class="so-view"><span class="so-view-label">見立て</span>${esc(cat.text)}</p>
+${soSkillTable(inCat)}
+<h3 class="so-h3">スキルごとの解説</h3>
+${inCat.map((r) => soSkillDetail(r, taxonomy)).join('\n')}`,
+  });
+}
+
+/** 解説の無いキー（taxonomy に足したが辞書を書いていない） */
+function soUnwritten(rows) {
+  const unwritten = rows.filter((r) => !r.s);
+  if (!unwritten.length) return '';
+  return section({
+    id: 'so-unwritten',
+    title: '解説未執筆',
+    body: `<p>${unwritten.map(({ k, t }) => `<code>${esc(k)}</code> ${trendBadge(t?.oneYear)}`).join('、')}</p>`,
+    footnote: 'config/taxonomy.json に足したスキルは config/skill-guide.json にも解説を書く',
+  });
+}
+
+/** 5. 見立てを採点するには。predict-add に渡せる形の例 */
+function soRegister(guide, byKey) {
+  const exampleKey = (guide.summary?.rising ?? []).find((k) => byKey.get(k)?.oneYear.recent?.p) ?? 'ai_agents';
+  const exampleP = byKey.get(exampleKey)?.oneYear.recent?.p ?? 0.1;
+  const example = {
+    title: `${guide.skills[exampleKey]?.label ?? exampleKey} の出現率は 2027Q4 に ${(Math.ceil(exampleP * 1.3 * 100) / 100 * 100).toFixed(0)}% を上回る`,
+    category: 'jobs',
+    tags: ['adoption'],
+    p: 0.55,
+    rationale: '（ここに自分の根拠を書く。見立ての文章をそのまま写さない）',
+    resolveOn: '2028-01-15',
+    resolver: {
+      kind: 'metric_threshold',
+      metric: `jobs.skill.share.${exampleKey}`,
+      period: '2027-Q4',
+      op: '>',
+      value: Math.ceil(exampleP * 1.3 * 100) / 100,
+      minN: 300,
+    },
+  };
+  return section({
+    id: 'so-register',
+    title: '見立てを採点するには',
+    body: `<p>このタブの見立ては採点されていません。自分でも同じように考えるなら、確率をつけて予測台帳に登録すると、期日にベースライン（現状維持・直線外挿）と比べて採点されます。値は自分で決めてください。下は形の例です。</p>
+<p>次の内容を BOM なしの UTF-8 のファイル（例: <code>prediction.json</code>。エディタで保存する）に保存し、<code>--file</code> で渡します。
+<code>--json '…'</code> でコマンドラインに直接書くと、Windows PowerShell では引数の <code>"</code> が取り除かれて読み取りに失敗します。</p>
+<pre class="so-pre"><code>${esc(JSON.stringify(example, null, 2))}</code></pre>
+<pre class="so-pre"><code>node scripts/predict-add.js --file prediction.json</code></pre>
+<p class="footnote">指標名は <code>node scripts/predict-add.js --metrics jobs.skill.share</code> で探せる。登録前にベースラインの確率が表示され、自分の確率とほぼ同じなら登録が止まる。</p>`,
+  });
+}
+
+/** 6. 注意 */
+function soCaveats() {
+  return section({
+    id: 'so-caveats',
+    title: '注意',
+    body: `<ul>
+<li><strong>語彙の固定</strong> — <code>config/taxonomy.json</code> の語だけを数える。新しい技術は語彙に足すまで 0 のまま出る</li>
+<li><strong>1つのキーが複数の語を束ねている</strong> — 各スキルの「数えている語」を見る（例: Ruby は rails も数える）。一般的な英単語と同じ綴りの語（spark、unity、node など）は、技術と関係ない出現も入る</li>
+<li><strong>「AI（語としての言及）」はスキルではない</strong> — 製品や会社の紹介での言及も数えるので、まとめからは外している</li>
+<li><strong>求人票1件あたりのスキルの数</strong> — 求人票が長く詳しくなると、全体の出現率が上がって見える</li>
+<li><strong>母集団</strong> — Hacker News の求人は英語圏・新興企業寄り。Java、C#、PHP などの大企業や既存 Web の需要は小さく出る</li>
+<li><strong>見立ての書き手</strong> — 見立ては Claude（LLM）が執筆時点の一般的な知見で書いた。Anthropic API の項目は執筆者自身に関わる</li>
+</ul>`,
+  });
+}
+
+/**
+ * スキル解説タブの本文。節ごとの関数を上から並べるだけにしてある。
+ * @param {object|null} guide config/skill-guide.json
+ * @param {{ basis: string, stalledAt: string|null, windows: object, byKey: Map }} trends skillTrends の結果
+ * @param {object} taxonomy config/taxonomy.json
+ * @param {string} asOf ビルド日
+ */
+function skillOutlookBody(guide, trends, taxonomy, asOf) {
+  if (!guide) {
+    return section({
+      id: 'so-empty',
+      title: 'スキル解説',
+      body: `<div class="empty"><code>config/skill-guide.json</code> がありません。解説を書くとここに表示されます</div>`,
+    });
+  }
+
+  const { windows, byKey } = trends;
+  const rows = Object.keys(taxonomy?.skills ?? guide.skills)
+    .map((k) => ({ k, s: guide.skills[k], t: byKey.get(k) }));
+
+  const categories = Object.entries(guide.categories ?? {})
+    .map(([catKey, cat]) => [catKey, cat, rows.filter((r) => (r.s?.category ?? null) === catKey)])
+    .filter(([, , inCat]) => inCat.length)
+    .map(([catKey, cat, inCat]) => soCategory(catKey, cat, inCat, taxonomy));
+
+  return [
+    soHowto(trends),
+    soSummary(guide, byKey, asOf),
+    soData(rows, windows),
+    ...categories,
+    soUnwritten(rows),
+    soRegister(guide, byKey),
+    soCaveats(),
+  ].filter(Boolean).join('\n');
+}
+
+/** `2026-05` → `2026 年 5 月` */
+function knowledgeLabel(ym) {
+  const m = /^(\d{4})-(\d{2})$/.exec(String(ym ?? ''));
+  return m ? `${m[1]} 年 ${Number(m[2])} 月` : '不明';
+}
+
 // ───────────────────────── 組み立て ─────────────────────────
 
 /** ページの先頭に出す1行。いまベースラインに勝っているかを最初に言う */
@@ -678,28 +953,52 @@ async function main() {
     footnote: '需給比が 1 を下回るのは「求人1件に対して求職者が1人より多い」状態',
   });
 
+  // 並びは DASHBOARD_BLOCK_IDS と同じ順。判定済みが0件だと bias / reliability は空文字になる
+  const blocks = {
+    scoreboard: scoreboardBlock(done, skill, scores ?? { brier: null, n: 0, baseRate: null }),
+    bias: biasBlock(done, bias, strata),
+    reliability: reliabilityBlock(done, bins),
+    upcoming: upcomingBlock(joined, mi, qi, ledgerIndex, today()),
+    ledger: ledgerBlock(joined),
+    summary,
+    jobs: jobsBlock(mi, qi, monthPeriods, quarterPeriods),
+    skills: skillsBlock(mi, monthPeriods),
+    ai: aiBlock(qi, quarterPeriods),
+    cross: crossBlock(qi, quarterPeriods),
+    quality: qualityBlock(mi, monthPeriods, status),
+  };
+  const dashboard = DASHBOARD_BLOCK_IDS.map((id) => blocks[id]).filter(Boolean).join('\n');
+
   const body = [
     header,
-    scoreboardBlock(done, skill, scores ?? { brier: null, n: 0, baseRate: null }),
-    biasBlock(done, bias, strata),
-    reliabilityBlock(done, bins),
-    upcomingBlock(joined, mi, qi, ledgerIndex, today()),
-    ledgerBlock(joined),
-    summary,
-    jobsBlock(mi, qi, monthPeriods, quarterPeriods),
-    skillsBlock(mi, monthPeriods),
-    aiBlock(qi, quarterPeriods),
-    crossBlock(qi, quarterPeriods),
-    qualityBlock(mi, monthPeriods, status),
+    tabs([
+      { id: 'dashboard', label: 'ダッシュボード', body: dashboard },
+      {
+        id: 'skill-outlook',
+        label: 'スキル解説',
+        body: skillOutlookBody(
+          await readJson(SKILL_GUIDE_PATH),
+          skillTrends(quarterly, today(), status?.hn ?? null),
+          await readJson(TAXONOMY_PATH),
+          today(),
+        ),
+      },
+      {
+        id: 'guide',
+        label: '見方',
+        body: guideBody({ renderedIds: DASHBOARD_BLOCK_IDS.filter((id) => blocks[id]) }),
+      },
+    ]),
     `<p class="footnote">このページは外部リソースを一切読み込みません。オフラインで開けます。`
     + `指標の定義は <code>config/metrics.json</code>（${esc(String(Object.keys(config?.fixed ?? {}).length))} 個の固定指標と`
     + ` ${esc(String(Object.keys(config?.families ?? {}).length))} 個の系列）にあります。生成 ${esc(nowIso())}</p>`,
   ].join('\n');
 
+  const html = page({ title: 'AI の進化と仕事のニーズ', body, script: TAB_SCRIPT });
   await mkdir(DIST_DIR, { recursive: true });
-  await writeFile(INDEX_HTML_PATH, page({ title: 'AI の進化と仕事のニーズ', body }), 'utf8');
+  await writeFile(INDEX_HTML_PATH, html, 'utf8');
 
-  const bytes = Buffer.byteLength(page({ title: 'x', body }), 'utf8');
+  const bytes = Buffer.byteLength(html, 'utf8');
   console.log(`[build] ${INDEX_HTML_PATH} を生成（${(bytes / 1024).toFixed(0)} KB）`);
 }
 

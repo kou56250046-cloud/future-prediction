@@ -9,6 +9,7 @@ export const DIST_DIR = join(ROOT, 'dist');
 
 // 設定
 export const TAXONOMY_PATH = join(CONFIG_DIR, 'taxonomy.json');
+export const SKILL_GUIDE_PATH = join(CONFIG_DIR, 'skill-guide.json');
 export const METRICS_CONFIG_PATH = join(CONFIG_DIR, 'metrics.json');
 export const FX_PATH = join(CONFIG_DIR, 'fx.json');
 export const HN_CONFIG_PATH = join(CONFIG_DIR, 'hn.json');

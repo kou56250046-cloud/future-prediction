@@ -17,7 +17,8 @@ const CSS = `
   --plane: #f9f9f7;
   --text-primary: #0b0b0b;
   --text-secondary: #52514e;
-  --muted: #898781;
+  /* 脚注や「件数不足」など意味のある文字にも使うので、サーフェスに対して 4.5:1 以上を取る（#fcfcfb に対して約 5.0:1） */
+  --muted: #6f6d66;
   --grid: #e1e0d9;
   --axis: #c3c2b7;
   --border: rgba(11,11,11,0.10);
@@ -148,7 +149,18 @@ details { margin-top: 10px; }
 summary { cursor: pointer; color: var(--text-secondary); font-size: 12.5px; }
 summary:hover { color: var(--text-primary); }
 details[open] summary { margin-bottom: 8px; }
-.scroll { overflow-x: auto; }
+/*
+ * 横にはみ出す表の端に影を出し、続きがあることを示す。
+ * local の覆い（サーフェス色）が中身と一緒に動き、端まで寄せると影を隠す。JS は使わない
+ */
+.scroll {
+  overflow-x: auto;
+  background:
+    linear-gradient(to right, var(--surface) 30%, transparent) left center / 32px 100% no-repeat local,
+    linear-gradient(to left, var(--surface) 30%, transparent) right center / 32px 100% no-repeat local,
+    radial-gradient(farthest-side at 0 50%, var(--axis), transparent) left center / 10px 100% no-repeat scroll,
+    radial-gradient(farthest-side at 100% 50%, var(--axis), transparent) right center / 10px 100% no-repeat scroll;
+}
 
 .grid-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 2px 20px; }
 .skill-row { display: flex; align-items: center; gap: 10px; padding: 3px 0; border-bottom: 1px solid var(--border); }
@@ -162,30 +174,234 @@ details[open] summary { margin-bottom: 8px; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
 .chip { border: 1px solid var(--border); border-radius: 999px; padding: 2px 10px; font-size: 12px; color: var(--text-secondary); }
 code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }
+
+/* hidden 属性を display 指定より優先させる。.tabbar の flex が勝つと、JS 無効でもタブバーが出てしまう */
+[hidden] { display: none !important; }
+/*
+ * 先頭以外のパネルは最初から隠しておく。スクリプトは </body> の直前で動くので、
+ * それまでに描画されると全パネルが見えてから消えるちらつきになる。
+ * JS が動いたら .tabs-js を付けて hidden 属性に任せる。JS 無効時は <noscript> の style で全部見せる
+ */
+.tabpanel ~ .tabpanel { display: none; }
+.tabs-js .tabpanel ~ .tabpanel { display: block; }
+/* タブの高さ。タップ領域（44px 以上）と、移動先の見出しを隠さない余白の両方をここから決める。
+   rem なので文字サイズを大きくすると一緒に伸びる */
+:root { --tabbar-h: 2.75rem; }
+.tabbar {
+  position: sticky; top: 0; z-index: 10;
+  display: flex; gap: 2px;
+  background: var(--plane);
+  border-bottom: 1px solid var(--border);
+  margin: 10px 0 0;
+  overflow-x: auto;
+}
+.tabbar [role="tab"] {
+  display: flex; align-items: center; min-height: var(--tabbar-h);
+  padding: 0 14px;
+  color: var(--text-secondary); text-decoration: none; font-size: 13.5px; white-space: nowrap;
+  border-bottom: 2px solid transparent; margin-bottom: -1px;
+}
+/* スクリプトがフォーカスを移した先（tabindex="-1"）には枠を出さない。キーで辿れる要素ではないため */
+[tabindex="-1"]:focus { outline: none; }
+.tabbar [role="tab"]:hover { color: var(--text-primary); }
+.tabbar [role="tab"][aria-selected="true"] { color: var(--text-primary); font-weight: 600; border-bottom-color: var(--series-1); }
+.tabbar [role="tab"]:focus-visible { outline: 2px solid var(--series-1); outline-offset: -2px; }
+.guide-block { padding: 10px 0 12px; border-bottom: 1px solid var(--border); }
+.guide-block:last-child { border-bottom: 0; }
+.guide-block h3 { font-size: 14px; margin: 0 0 6px; }
+.guide-block dl { display: grid; grid-template-columns: 7.5em 1fr; gap: 3px 12px; margin: 0; font-size: 13px; }
+.guide-block dt { color: var(--text-secondary); }
+.guide-block dd { margin: 0; }
+@media (max-width: 560px) { .guide-block dl { grid-template-columns: 1fr; } .guide-block dd { margin-bottom: 6px; } }
+section.block ul { margin: 6px 0; padding-left: 1.4em; }
+section.block a { color: var(--series-1); }
+/* スキル解説タブ。色だけに頼らず、ラベルの文字でも分類が読めるようにする */
+.trend, .outlook, .mismatch {
+  display: inline-block; font-size: 11.5px; line-height: 1.5; padding: 0 7px; border-radius: 999px;
+  border: 1px solid var(--border); white-space: nowrap; vertical-align: 1px;
+}
+.trend.t-surge, .trend.t-up { color: var(--success-text); border-color: var(--success-text); }
+.trend.t-surge { font-weight: 700; }
+.trend.t-down, .trend.t-plunge { color: var(--critical); border-color: var(--critical); }
+.trend.t-plunge { font-weight: 700; }
+.trend.t-flat { color: var(--text-secondary); }
+.trend.t-insufficient { color: var(--muted); border-style: dashed; }
+/* 見立てはデータより弱く見せる。枠を点線にし、向きは枠の色だけで控えめに分ける（文字でも読める） */
+.outlook { background: var(--plane); color: var(--text-primary); border-style: dotted; }
+.outlook.o-up { border-color: var(--success-text); }
+.outlook.o-down { border-color: var(--critical); }
+.outlook.o-unclear { color: var(--text-secondary); }
+.outlook::before { content: "見立て: "; color: var(--muted); }
+.mismatch {
+  color: var(--text-primary); border-color: var(--warning);
+  background: var(--plane);  /* color-mix に対応しないブラウザ向け */
+  background: color-mix(in srgb, var(--warning) 18%, transparent);
+}
+.mismatch::before { content: "! "; font-weight: 700; }
+.attribution { font-size: 12.5px; color: var(--text-secondary); border-left: 3px solid var(--series-1); padding: 4px 10px; margin: 4px 0 12px; }
+.stale { font-size: 13px; border-left: 3px solid var(--critical); padding: 4px 10px; margin: 0 0 12px; }
+.so-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 28px; }
+@media (max-width: 560px) { .so-columns { grid-template-columns: 1fr; } }
+section.block h3 { font-size: 13.5px; margin: 14px 0 6px; }
+.so-list { list-style: none; padding: 0 !important; margin: 0; }
+.so-list li { padding: 4px 0; border-bottom: 1px solid var(--border); }
+.so-view { border-left: 3px solid var(--series-1); padding: 2px 10px; }
+.so-view-label { display: inline-block; font-size: 11.5px; color: var(--muted); margin-right: 8px; }
+/* 狭い画面で列を押しつぶして縦書きのように折り返さないよう、最小幅を持たせて横スクロールさせる */
+.so-table { min-width: 640px; }
+.so-table td:nth-child(n+2), .so-table th:nth-child(n+2) { text-align: left; white-space: nowrap; }
+.so-skill dd table { min-width: 460px; }
+.so-table td:nth-child(2) { font-variant-numeric: tabular-nums; }
+.so-skill { border-bottom: 1px solid var(--border); padding: 4px 0; margin: 0; }
+.so-skill summary { color: var(--text-primary); font-size: 13px; padding: 3px 0; }
+.so-skill-name { font-weight: 600; margin-right: 4px; }
+.so-skill dl { display: grid; grid-template-columns: 7em 1fr; gap: 4px 12px; margin: 4px 0 10px; font-size: 13px; }
+.so-skill dt { color: var(--text-secondary); }
+.so-skill dd { margin: 0; min-width: 0; }
+@media (max-width: 560px) { .so-skill dl { grid-template-columns: 1fr; } }
+.so-pre { background: var(--plane); border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; overflow-x: auto; white-space: pre-wrap; overflow-wrap: anywhere; }
+/* 移動先の見出しが sticky のタブバーに隠れないように */
+.tabpanel [id] { scroll-margin-top: calc(var(--tabbar-h) + 12px); }
 @media (max-width: 560px) {
   body { padding: 0 12px 48px; }
   section.block { padding: 14px 14px 16px; }
 }
 `;
 
-/** ページ全体を組み立てる */
-export function page({ title, body }) {
+/** ページ全体を組み立てる。script はインラインで </body> の直前に1つだけ置く */
+export function page({ title, body, script }) {
   return `<!doctype html>
 <html lang="ja">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>${esc(title)}</title>
-<style>${CSS}</style>
+<style>${CSS}</style>${script ? '\n<noscript><style>.tabpanel ~ .tabpanel { display: block; }</style></noscript>' : ''}
 </head>
 <body>
 <div class="wrap">
 ${body}
-</div>
+</div>${script ? `\n<script>${script}</script>` : ''}
 </body>
 </html>
 `;
 }
+
+/**
+ * タブバーとパネル。
+ *
+ * タブバーは hidden で出し、TAB_SCRIPT が動いたときだけ見せる。
+ * JS が無効ならパネルが上から全部見え、タブの <a href="#…"> はページ内リンクとして働く。
+ * @param {Array<{ id: string, label: string, body: string }>} items
+ */
+export function tabs(items) {
+  const bar = items.map((t, i) => `<a role="tab" id="tab-${esc(t.id)}" href="#${esc(t.id)}"`
+    + ` aria-controls="${esc(t.id)}" aria-selected="${i === 0}" tabindex="${i === 0 ? 0 : -1}">${esc(t.label)}</a>`).join('');
+  const panels = items.map((t) => `<div class="tabpanel" role="tabpanel" id="${esc(t.id)}" aria-labelledby="tab-${esc(t.id)}">
+${t.body}
+</div>`).join('\n');
+  return `<div class="tab-anchor"></div>
+<nav class="tabbar" role="tablist" aria-label="表示の切り替え" hidden>${bar}</nav>
+${panels}`;
+}
+
+/**
+ * タブの切り替え。状態は URL の hash に持たせ、戻るボタンで前のタブに戻れるようにする。
+ *
+ * hash がパネルの id ならそのパネル、パネルの中の要素（#skills など）ならそれを含むパネルを選ぶ。
+ * 隠れていたパネルへはブラウザの自動スクロールが効かないので、位置は必ずここで決める。
+ */
+export const TAB_SCRIPT = `
+(function () {
+  var bar = document.querySelector('.tabbar');
+  var anchor = document.querySelector('.tab-anchor');
+  if (!bar || !anchor) return;
+  var tabs = Array.prototype.slice.call(bar.querySelectorAll('[role="tab"]'));
+  var panels = tabs.map(function (t) { return document.getElementById(t.getAttribute('aria-controls')); });
+  bar.hidden = false;
+  // ここから先はパネルの表示を hidden 属性で制御する（CSS の初期非表示を外す）
+  document.documentElement.classList.add('tabs-js');
+
+  function resolve(hash) {
+    var id = '';
+    try { id = decodeURIComponent((hash || '').replace(/^#/, '')); } catch (e) { id = ''; }
+    var el = id ? document.getElementById(id) : null;
+    if (!el) return { panel: panels[0], target: null };
+    if (panels.indexOf(el) !== -1) return { panel: el, target: null };
+    var owner = el.closest('[role="tabpanel"]');
+    return owner ? { panel: owner, target: el } : { panel: panels[0], target: null };
+  }
+
+  function select(r, scroll) {
+    panels.forEach(function (p, i) {
+      var on = p === r.panel;
+      p.hidden = !on;
+      tabs[i].setAttribute('aria-selected', on ? 'true' : 'false');
+      tabs[i].tabIndex = on ? 0 : -1;
+    });
+    if (!scroll) return;
+    if (r.target) {
+      // 折りたたみの中身へのリンク（スキル解説の各スキル）は開いてから移る
+      if (r.target.tagName === 'DETAILS') r.target.open = true;
+      r.target.scrollIntoView();
+    } else {
+      // パネルの先頭をタブバーの直下に置く。ヘッダーが見えている位置ならそのまま
+      var top = anchor.getBoundingClientRect().top + window.pageYOffset;
+      if (window.pageYOffset > top) window.scrollTo(0, top);
+    }
+    keepFocus(r.target || r.panel);
+  }
+
+  // 押したリンクが隠れたパネルにあると、フォーカスが body に落ちて Tab 移動が先頭からになる。
+  // そのときだけ移動先へフォーカスを移す。タブ自体にフォーカスがあるとき（キー操作）は動かさない
+  function keepFocus(el) {
+    var a = document.activeElement;
+    if (a && a !== document.body && !a.closest('[hidden]')) return;
+    if (!el.hasAttribute('tabindex') && !/^(A|BUTTON|INPUT|SELECT|TEXTAREA|SUMMARY)$/.test(el.tagName)) {
+      el.setAttribute('tabindex', '-1');
+    }
+    el.focus({ preventScroll: true });
+  }
+
+  function fromLocation(scroll) { select(resolve(location.hash), scroll); }
+
+  window.addEventListener('hashchange', function () { fromLocation(true); });
+  window.addEventListener('popstate', function () { fromLocation(true); });
+  // 同じ hash のリンクをもう一度押したときは hashchange が起きないので、ここで拾う
+  document.addEventListener('click', function (ev) {
+    var a = ev.target.closest && ev.target.closest('a[href^="#"]');
+    if (a && a.getAttribute('href') === location.hash) fromLocation(true);
+  });
+  bar.addEventListener('keydown', function (ev) {
+    var i = tabs.indexOf(document.activeElement);
+    if (i === -1) return;
+    var j = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: tabs.length - 1 }[ev.key];
+    if (j === undefined) return;
+    ev.preventDefault();
+    j = (j + tabs.length) % tabs.length;
+    // location.hash を書き換えるとブラウザがフォーカスを移してしまい、続けて矢印キーが効かなくなる。
+    // 履歴には積むが、フォーカスはタブに残す
+    var href = tabs[j].getAttribute('href');
+    try {
+      history.pushState(null, '', href);
+      fromLocation(true);
+      tabs[j].focus();
+    } catch (e) {
+      // file:// で pushState が拒否されるブラウザ向け。hash を変えてからフォーカスを戻す
+      location.hash = href;
+      setTimeout(function () { tabs[j].focus(); }, 0);
+    }
+  });
+
+  fromLocation(!!location.hash);
+  // 読み込み完了後にブラウザが hash の位置へスクロールし直すことがあるので、そのときだけ合わせ直す。
+  // 位置が動いていなければ何もしない（2回スクロールして二段に跳ねるのを避ける）
+  var settledY = window.pageYOffset;
+  window.addEventListener('load', function () {
+    if (location.hash && window.pageYOffset !== settledY) fromLocation(true);
+  });
+})();
+`;
 
 /** 1ブロック */
 export function section({ id, title, sub, body, footnote }) {
