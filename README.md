@@ -4,6 +4,7 @@ AI の進化と IT 関連職のニーズ変化を定点観測し、**自分の�
 ローカル完結のシステム。
 
 npm 依存ゼロ。`dist/index.html` は外部リソースを一切読まないので、ダブルクリックで開ける。
+GitHub Pages に載せれば、スマートフォンや PC にアプリとしてインストールして使うこともできる（PWA）。
 
 ---
 
@@ -33,6 +34,36 @@ npm run sync      # 収集 → 正規化 → 指標 → 判定 → ビルド（�
 
 `dist/index.html` をエクスプローラからダブルクリックして開く。
 
+### アプリとしてインストールする（PWA）
+
+インストールとオフラインキャッシュは **http(s) で開いたときだけ**効く。`file://` ではブラウザの仕様でサービスワーカーが動かない
+（`file://` はもともとオフラインで開けるので困らない）。
+
+```bash
+npm run deploy    # ビルドして GitHub Pages（gh-pages）に載せる
+```
+
+Pages の URL をスマートフォンや PC の Chrome で開き、アドレスバーの「インストール」やメニューの「ホーム画面に追加」を選ぶ。
+iOS は Safari の共有メニューから「ホーム画面に追加」。
+
+- データはページに埋め込まれているので、`npm run sync` → `npm run deploy` の後に1回開き直せば新しい版になる（ネットワーク優先）
+- 一度開いた後は、電波が無くても最後に取得した版を見られる
+- **既知の制限（オフライン）:** Pages のオリジン `kou56250046-cloud.github.io` を共有する他のプロジェクト（kakei-manager・weather-analysis など約20）の
+  サービスワーカーは、有効になるたびに自分以外のキャッシュを全部消す。それらを開いた後は、次にオンラインでこのページを開くまでオフライン表示できない
+- **既知の制限（残るデータ）:** 一度開いた端末には、予測台帳を含む版がサイトデータ（Cache Storage）として残る。
+  これは「キャッシュされた画像とファイル」を消しても消えず、消すにはそのサイトのサイトデータ（Cookie と他のサイトデータ）を削除する。
+  自分の端末でない PC で開いたときは、閲覧後に消しておく
+
+手元で確かめるときは Pages と同じサブパスで配信する。127.0.0.1 は https でなくてもサービスワーカーが動く。
+
+```bash
+node scripts/serve.js 8123 --base future-prediction   # http://127.0.0.1:8123/future-prediction/
+```
+
+Git Bash では `--base /future-prediction/` と先頭に `/` を付けると Windows のパスに書き換えられるので、`/` を省く。
+`--base` を付けずにルートで配信したときは、サービスワーカーを登録しない（オリジン全体を範囲にすると、
+同じポートを使う他のプロジェクトのリクエストまで抱え込むため）。PWA の確認には `--base` を付ける。
+
 ### 予測を登録する
 
 ```bash
@@ -61,7 +92,7 @@ node scripts/predict-score.js                # Brier・ベースライン比較�
 
 ```bash
 npm test                                     # node --test
-node scripts/serve.js                        # dist/ をローカル配信（開発用）
+node scripts/serve.js                        # dist/ をローカル配信（開発用・PWA の確認用。--base でサブパス配信）
 node scripts/compress-old.js                 # 2年より古い生データを gzip（150MB → 67MB）
 node scripts/normalize-jobs.js --from 2020-01 # パーサを直したときの部分再生成
 ```
@@ -133,7 +164,7 @@ node scripts/normalize-jobs.js --from 2020-01 # パーサを直したときの�
 config/     taxonomy.json（分類語彙）/ metrics.json（指標カタログ）/ fx.json / hn.json
 scripts/
   lib/      paths period store http log entities hn parse-job aidb metrics
-            ledger baseline verify svg html matrix regress
+            ledger baseline verify svg html matrix regress png icon pwa
   collect-hn.js       HN の求人スレッドを増分取得
   collect-ai.js       ai-scraping の app.db から読み取り（無くても exit 0）
   normalize-jobs.js   求人票 → 機械集計できるレコード
@@ -141,17 +172,24 @@ scripts/
   predict-add.js      予測の登録（検証 + ベースライン凍結）
   predict-resolve.js  期日判定
   predict-score.js    採点とバイアス検出
-  build.js            dist/index.html を生成
+  build.js            dist/index.html と PWA 用のファイルを生成
+  deploy-pages.js     dist/ の許可リストのファイルだけを gh-pages に載せる
+  serve.js            dist/ をローカル配信（--base でサブパス）
 data/
   raw/      HN の求人全文、ai-scraping からのコピー（git 管理外・再取得可能）
   norm/     正規化済み求人
   metrics/  指標（long 形式。毎回まるごと計算し直す）
   ledger/   予測台帳と判定結果（追記専用。ここだけは失うと取り返しがつかない）
-dist/       index.html（生成物）
+dist/       生成物。すべて build.js が書く
+  index.html             画面本体（単一ファイル。file:// で開ける）
+  manifest.webmanifest   PWA の manifest
+  sw.js                  サービスワーカー（ネットワーク優先。キャッシュ名はビルド時刻）
+  icon.svg  icon-192.png  icon-512.png  icon-maskable-512.png  apple-touch-icon.png
+                         アイコン。図柄は scripts/lib/icon.js のコードで描く（画像はコミットしない）
 ```
 
 `scripts/lib/` の `store` `http` `matrix` `regress` と `verify` の一部は
-`~/projects/weather-analysis` からの移植。予測を検証する仕組みはあちらで作り込まれていて、
+`~/projects/weather-analysis` からの移植（`png` も同じ）。予測を検証する仕組みはあちらで作り込まれていて、
 「ベースラインより良くなければ意味がない」という思想ごと持ってきている。
 
 ---

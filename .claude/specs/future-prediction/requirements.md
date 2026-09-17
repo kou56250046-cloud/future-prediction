@@ -23,7 +23,7 @@ AI の進化で仕事に求められる技量が変わっている、という�
 | A1 | 2011年以降の HN 求人を取得でき、再実行しても行数が増えない | `node scripts/collect-hn.js` を2回 | 済（184ヶ月 130,566件、再実行で新規0件） |
 | A2 | 職種を分類できなかった割合が 20% 未満 | `node scripts/normalize-jobs.js` の出力 | 済（3.8%） |
 | A3 | 指標を再計算しても行数が変わらない | `build-metrics.js` を2回 | 済（月次45,828行 / 四半期16,056行で不変） |
-| A4 | `dist/index.html` がダブルクリックで開き、外部通信がゼロ | 外部リソースの参照（`<script src`・`<link`・`<iframe`・外部 URL を指す `src`/`href`）がそれぞれ0件。インライン script はタブ切り替えの1つだけ | 済（2026-09-17 に見方タブ・スキル解説の追加に合わせて条件を改定。[guide-and-skill-outlook](../guide-and-skill-outlook/requirements.md)） |
+| A4 | `dist/index.html` がダブルクリックで開き、外部通信がゼロ | `<script src`・`<iframe`・`http(s)://` を指す `src`/`href` がそれぞれ0件。静的な HTML の `<link` は `rel="icon" href="icon.svg"`・`rel="icon" href="icon-192.png"`・`rel="apple-touch-icon" href="apple-touch-icon.png"` の3つだけで、`rel="manifest"` の文字列を含まない（manifest の link は http(s) のときだけスクリプトが足す）。インライン script は1つだけ | 済（2026-09-17 に見方タブ・スキル解説の追加に合わせて条件を改定。[guide-and-skill-outlook](../guide-and-skill-outlook/requirements.md)。同日、PWA 化に合わせて `<link` の条件を改定。[pwa-and-icon](../pwa-and-icon/requirements.md)） |
 | A5 | 機械判定できない予測は登録を拒否する | 存在しない指標名・判定日が期末より前の予測を投入 | 済（候補提示つきで拒否） |
 | A6 | 自分の確率がベースラインとほぼ同じなら警告する | 確率を persistence と同値にして登録 | 済（`--force` を要求） |
 | A7 | データ未着の期は pending になり、再実行で拾われる | `--as-of` で未来日を指定 | 済 |
@@ -61,7 +61,7 @@ node scripts/predict-score.js               # 採点
 AI_RADAR_DB=/nonexistent/app.db npm run sync  # ai-scraping 不在でも完走するか
 ```
 
-`dist/index.html` をダブルクリックし、DevTools の Network が空であること。
+`dist/index.html` をダブルクリックし、DevTools の Network に外部オリジンへの通信が無いこと（同じディレクトリの `icon.svg` は出る）。
 
 ## 実装中に判明し、仕様に反映したこと
 

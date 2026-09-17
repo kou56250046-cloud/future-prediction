@@ -111,13 +111,17 @@ DB が無い・壊れている場合もダッシュボードは動くこと。
 **`static-zero` + `scripts/` 分離**（weather-analysis と同じ形）。**npm 依存ゼロを維持**。
 
 - ランタイム: Node >= 22.5（`node:sqlite` の `DatabaseSync` に必要。実測済み）
-- 画面: `dist/index.html` 単一ファイル。SVG はビルド時に座標計算して埋め込み、`file://` で開ける
+- 画面: `dist/index.html` 単一ファイル。SVG はビルド時に座標計算して埋め込み、`file://` で開ける。
+  並べて PWA 用の manifest・サービスワーカー・アイコンを出す。これらは http(s)（GitHub Pages / `serve.js`）で
+  開いたときだけ読まれ、`file://` では読まない（2026-09-17 追加。[pwa-and-icon](../pwa-and-icon/requirements.md)）
 - 収集: `scripts/*.js` を手動実行。**定期実行は設定しない**（要件が「実行タイミングは自分で決める」。
   GitHub Actions cron は公開リポジトリ前提になり、キャリア判断のメモを公開する羽目になる）
 
 static-zero からの逸脱は2点のみ。`build.mjs` 1枚 → `scripts/`（工程が5つあり1ファイルに入らない）、
 `index.html` → `dist/index.html`（`data/` が入力、`dist/` が出力）。
-CDN 不使用・ネットワークアクセスゼロ・静的SVG はすべて遵守。
+CDN 不使用・外部オリジンへのアクセスゼロ・静的SVG はすべて遵守。
+`file://` で開いたときのネットワークアクセスは、同じディレクトリのファビコン（`icon.svg`）だけ。
+http(s) では同一オリジンの manifest・サービスワーカー・アイコンも読む（[pwa-and-icon](../pwa-and-icon/requirements.md)）。
 
 却下: `vite-ts`（公開要件なし）、`react-app`（状態はフィルタ2〜3個）、`node-cli`（画面が中核）。
 
@@ -158,7 +162,7 @@ future-prediction/
 │  ├ metrics/{monthly,quarterly}.ndjson
 │  ├ ledger/{predictions,resolutions}.ndjson
 │  └ state/collect-status.json
-├ dist/index.html
+├ dist/index.html  manifest.webmanifest  sw.js  icon*.png  icon.svg  apple-touch-icon.png
 └ test/*.test.js            node --test
 ```
 
@@ -425,7 +429,7 @@ tags に 'adoption' を含む resolved 群 A について
 | T2 | HN スレッド一覧とコメントを増分取得 | `scripts/lib/{entities,hn}.js` `scripts/collect-hn.js` `config/hn.json` | `--months 3` で raw が生成。**再実行で行数が増えない**。`--months 999` が5分以内に完走。Ctrl-C 後の再実行が続きから走る |
 | T3 | 求人コメントの正規化 | `scripts/lib/parse-job.js` `scripts/normalize-jobs.js` `config/{taxonomy,fx}.json` `test/parse-job.test.js` | パーサの実例20件がテスト通過。**`unclassified` 率を標準出力に出し 20% 未満**。給与パース率も出す |
 | T4 | 仕事側の指標計算 | `scripts/lib/metrics.js` `scripts/build-metrics.js` `config/metrics.json` | `jobs.tightness` が読める値を返す。**再実行で行数が変わらない** |
-| T5 | SVG 描画とページ生成（画面 #6,#7,#10） | `scripts/lib/{svg,html}.js` `scripts/build.js` | **ダブルクリックで開き、職種シェアの積み上げ面と tightness が表示される**。DevTools の Network が空（外部通信ゼロ）。**ここまでで使える** |
+| T5 | SVG 描画とページ生成（画面 #6,#7,#10） | `scripts/lib/{svg,html}.js` `scripts/build.js` | **ダブルクリックで開き、職種シェアの積み上げ面と tightness が表示される**。DevTools の Network が空（外部通信ゼロ。2026-09-17 以降は同じディレクトリの `icon.svg` だけが出る）。**ここまでで使える** |
 | T6 | 台帳の登録。resolver 検証・dry-run・ベースライン凍結 | `scripts/lib/{ledger,baseline}.js` `scripts/predict-add.js` `scripts/lib/{matrix,regress}.js` | 予測を1本登録できる。**存在しない metric 名は拒否され候補が出る**。**period > resolveOn が拒否される**。4種のベースラインが表示され `frozen` に書かれる |
 | T7 | 期日判定と採点 | `scripts/predict-resolve.js` `scripts/predict-score.js` `scripts/lib/verify.js` | 過去期の予測を仕込んで判定 → `resolutions.ndjson` に outcome。`--as-of` で再現。**データ未着の期は pending になり再実行で拾われる**。Brier と4種の skill score が出る |
 | T8 | バイアス検出と台帳ブロック描画（画面 #1〜#5） | `scripts/lib/{verify,svg}.js` `scripts/build.js` | 最上段にスコアボード。**負けているベースラインの列が赤い**。信頼度図と層別表4つ、判定文が出る。**解決済み0件でも壊れず「まだ判定済みの予測がありません」と出る** |
@@ -478,7 +482,8 @@ npm run collect && npm run normalize && npm run metrics && npm run build
 
 1. `data/raw/hn/posts/` に約180ファイル、`unclassified` 率が 20% 未満
 2. `dist/index.html` をエクスプローラからダブルクリック → 職種シェアと `jobs.tightness` が表示
-3. DevTools の Network タブが空（外部通信ゼロ＝オフライン動作）
+3. DevTools の Network タブに外部オリジンへの通信が無い（オフライン動作）。
+   同じディレクトリの `icon.svg` の読み込みは出る（2026-09-17 改定。[pwa-and-icon](../pwa-and-icon/requirements.md)）
 4. **既知の答え合わせ**: `jobs.skill.share.llm` が 2015→2020→2023→2026 で
    0.3% → 0.5% → 6.4% → 16.5% 付近になること。ここが合わなければパーサが壊れている
 

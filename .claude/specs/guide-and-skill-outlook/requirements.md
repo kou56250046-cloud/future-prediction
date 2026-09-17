@@ -46,7 +46,7 @@ Brier・skill score・需給比・前年同月差・被覆率など、読み方�
 | R5a | `role="tablist"` / `role="tab"` / `aria-selected` / `aria-controls` / `role="tabpanel"` / `aria-labelledby` が付いている | dist の HTML を検査 |
 | R5b | タブにフォーカスがあるとき、←→ で前後のタブ、Home / End で先頭・末尾のタブへ移動して表示も切り替わる | ブラウザで操作 |
 | R6 | JavaScript が無効でも、タブバーは出ず、3つのパネルの中身が上から順に全部読める | ブラウザで JS を無効にして `file://` で開く |
-| R7 | 外部リソースを読まない。`<script src`・`<link`・`<iframe`・`http(s)://` を指す `src`/`href` がそれぞれ 0 件。インラインの `<script>` は1つだけ | dist の HTML を検査 |
+| R7 | 外部リソースを読まない。`<script src`・`<iframe`・`http(s)://` を指す `src`/`href` がそれぞれ 0 件。インラインの `<script>` は1つだけ。（2026-09-17 改定: `<link` は同じディレクトリのアイコン3つだけを許す。条件の全文は [pwa-and-icon](../pwa-and-icon/requirements.md) の X3） | dist の HTML を検査（`test/pwa.test.js`） |
 | R8 | `file://` で開いても、http で配信しても（`node scripts/serve.js`）R1〜R5b が成り立つ | 両方で操作 |
 
 ### スキル解説タブ
