@@ -1,0 +1,311 @@
+{
+  "_comment": "指標カタログ。何をどう数えたかと、読むときに気をつけることを書く。predict-add.js はここに無い指標名での予測登録を拒否する。",
+  "_version": 1,
+  "_fixed": "名前が固定の指標。families と違い、そのままの名前で存在する",
+  "fixed": {
+    "jobs.postings.count": {
+      "label": "求人票の数",
+      "grain": [
+        "month"
+      ],
+      "unit": "count",
+      "source": "hn",
+      "definition": "その月の Who is hiring スレッドのトップレベルコメント数",
+      "caveat": "スレッドの人気そのものに左右される。水準より変化を見る"
+    },
+    "jobs.seekers.count": {
+      "label": "求職者の数",
+      "grain": [
+        "month"
+      ],
+      "unit": "count",
+      "source": "hn",
+      "definition": "その月の Who wants to be hired スレッドのトップレベルコメント数",
+      "caveat": "2015年以前は求職側スレッドが無い月がある"
+    },
+    "jobs.tightness": {
+      "label": "需給比（求人÷求職）",
+      "grain": [
+        "month",
+        "quarter"
+      ],
+      "unit": "ratio",
+      "source": "hn",
+      "definition": "jobs.postings.count / max(1, jobs.seekers.count)",
+      "caveat": "1を下回ると求職者の方が多い。絶対水準はHNの母集団に依存するので、推移で読む"
+    },
+    "jobs.remote.share": {
+      "label": "リモート可の割合",
+      "grain": [
+        "month",
+        "quarter"
+      ],
+      "unit": "share",
+      "source": "hn",
+      "definition": "remote の件数 ÷ 勤務形態を読めた件数（hybrid は分子に含めない）",
+      "caveat": null
+    },
+    "jobs.ai_in_jd.share": {
+      "label": "AI に言及した求人の割合",
+      "grain": [
+        "month",
+        "quarter"
+      ],
+      "unit": "share",
+      "source": "hn",
+      "definition": "本文に AI/LLM/機械学習などの語がある件数 ÷ 求人票の数",
+      "caveat": "言及と実務要求は別。AI という語がバズワードとして使われた分も入る"
+    },
+    "jobs.salary.p25": {
+      "label": "提示年収 下位25%",
+      "grain": [
+        "quarter"
+      ],
+      "unit": "usd",
+      "source": "hn",
+      "definition": "給与を読めた求人の (min+max)/2 の25%分位。USD年収に換算済み",
+      "caveat": "給与を書く求人は全体の数%〜2割。書く企業に偏りがある"
+    },
+    "jobs.salary.p50": {
+      "label": "提示年収 中央値",
+      "grain": [
+        "month",
+        "quarter"
+      ],
+      "unit": "usd",
+      "source": "hn",
+      "definition": "給与を読めた求人の (min+max)/2 の中央値。USD年収に換算済み",
+      "caveat": "給与を書く求人は全体の数%〜2割。2011-2015 は母数が小さく揺れる"
+    },
+    "jobs.salary.p75": {
+      "label": "提示年収 上位25%",
+      "grain": [
+        "quarter"
+      ],
+      "unit": "usd",
+      "source": "hn",
+      "definition": "給与を読めた求人の (min+max)/2 の75%分位。USD年収に換算済み",
+      "caveat": "給与を書く求人は全体の数%〜2割"
+    },
+    "jobs.company.hhi": {
+      "label": "求人の企業集中度",
+      "grain": [
+        "quarter"
+      ],
+      "unit": "ratio",
+      "source": "hn",
+      "definition": "各社のシェアの二乗和（ハーフィンダール指数）。1に近いほど少数の企業に偏る",
+      "caveat": "会社名の表記ゆれを名寄せしていないので、同じ会社が別々に数えられることがある"
+    },
+    "quality.jobs.unclassified": {
+      "label": "職種を分類できなかった割合",
+      "grain": [
+        "month"
+      ],
+      "unit": "share",
+      "source": "hn",
+      "definition": "role が unclassified の件数 ÷ 求人票の数",
+      "caveat": "0.20 を超えたら taxonomy.json が現実に追いついていない合図。指標ではなく計器"
+    },
+    "quality.jobs.salary_parsed": {
+      "label": "給与を読めた割合",
+      "grain": [
+        "month"
+      ],
+      "unit": "share",
+      "source": "hn",
+      "definition": "salaryConfidence が high の件数 ÷ 求人票の数",
+      "caveat": "低いのはパーサの欠陥とは限らない。給与を書かない求人が多いだけのことがある"
+    },
+    "ai.context.p50": {
+      "label": "文脈長の中央値",
+      "grain": [
+        "quarter"
+      ],
+      "unit": "tokens",
+      "source": "ai-radar",
+      "definition": "その四半期に release_date を持つモデルの context の中央値",
+      "caveat": "最新スナップショットに載っているモデルだけを release_date で並べ直したもの。当時カタログにあった集合ではない（生存者バイアス）"
+    },
+    "ai.cost_in.p50": {
+      "label": "入力コストの中央値",
+      "grain": [
+        "quarter"
+      ],
+      "unit": "cost_raw",
+      "source": "ai-radar",
+      "definition": "その四半期に release_date を持つモデルの cost_in の中央値",
+      "caveat": "生存者バイアスあり。単位は ai-scraping の生値のまま（models.dev 由来）。絶対額ではなく推移を見る"
+    },
+    "ai.cost_in.p10": {
+      "label": "入力コストの下位10%",
+      "grain": [
+        "quarter"
+      ],
+      "unit": "cost_raw",
+      "source": "ai-radar",
+      "definition": "同上の10%分位。最安手段のコスト",
+      "caveat": "生存者バイアスあり"
+    },
+    "ai.reasoning.share": {
+      "label": "推論対応モデルの割合",
+      "grain": [
+        "quarter"
+      ],
+      "unit": "share",
+      "source": "ai-radar",
+      "definition": "reasoning フラグが立つモデル ÷ その四半期のモデル数",
+      "caveat": "生存者バイアスあり。推論能力が標準装備になっていく速度を見る"
+    },
+    "ai.toolcall.share": {
+      "label": "ツール呼び出し対応の割合",
+      "grain": [
+        "quarter"
+      ],
+      "unit": "share",
+      "source": "ai-radar",
+      "definition": "tool_call フラグが立つモデル ÷ その四半期のモデル数",
+      "caveat": "生存者バイアスあり"
+    },
+    "ai.releases.count": {
+      "label": "モデルのリリース数",
+      "grain": [
+        "quarter"
+      ],
+      "unit": "count",
+      "source": "ai-radar",
+      "definition": "その四半期に release_date を持つモデルの数",
+      "caveat": "生存者バイアスあり。廃止されたモデルは数えられていない"
+    },
+    "ai.providers.active": {
+      "label": "提供事業者の数",
+      "grain": [
+        "quarter"
+      ],
+      "unit": "count",
+      "source": "ai-radar",
+      "definition": "その四半期にモデルを出した provider の異なり数",
+      "caveat": "生存者バイアスあり。ゲートウェイ事業者も1件と数えるので、実質の開発元より多く出る"
+    },
+    "ai.output_limit.p50": {
+      "label": "出力上限の中央値",
+      "grain": [
+        "quarter"
+      ],
+      "unit": "tokens",
+      "source": "ai-radar",
+      "definition": "その四半期のモデルの output_limit の中央値",
+      "caveat": "生存者バイアスあり"
+    },
+    "ai.context.p95": {
+      "label": "文脈長の上位5%",
+      "grain": [
+        "quarter"
+      ],
+      "unit": "tokens",
+      "source": "ai-radar",
+      "definition": "その四半期に release_date を持つモデルの context の95%分位",
+      "caveat": "生存者バイアスあり。最大値ではなく分位点なのは、無制限を表す番兵値（99999999）が実データに混ざっているため"
+    }
+  },
+  "_families": "末尾にメンバー名が付く指標。jobs.role.share.swe のように使う。members は実データから決まるので、存在確認は metrics データに対して行う",
+  "families": {
+    "jobs.role.share": {
+      "label": "職種のシェア",
+      "grain": [
+        "month",
+        "quarter"
+      ],
+      "unit": "share",
+      "source": "hn",
+      "definition": "その職種の件数 ÷ 求人票の数。1求人1職種（priority 最大のもの）",
+      "caveat": "unclassified も1つの職種として分母に含む。隠すと品質劣化に気づけない"
+    },
+    "jobs.role.count": {
+      "label": "職種の件数",
+      "grain": [
+        "month",
+        "quarter"
+      ],
+      "unit": "count",
+      "source": "hn",
+      "definition": "その職種の求人票の数",
+      "caveat": "シェアだけ見ると市場全体の縮小が見えないので、絶対数も持つ"
+    },
+    "jobs.seniority.share": {
+      "label": "経験レベルのシェア",
+      "grain": [
+        "month",
+        "quarter"
+      ],
+      "unit": "share",
+      "source": "hn",
+      "definition": "その水準の件数 ÷ 経験レベルを読めた件数（unknown は分母から外す）",
+      "caveat": "求人票に書かれた語からの推定。junior の減少は AI の影響とは限らない（HN の母集団の変化もある）"
+    },
+    "jobs.skill.share": {
+      "label": "スキルの出現率",
+      "grain": [
+        "month",
+        "quarter"
+      ],
+      "unit": "share",
+      "source": "hn",
+      "definition": "その語を含む求人票の数 ÷ 求人票の数。1求人1カウント",
+      "caveat": "語彙は config/taxonomy.json 固定。新しい技術は語彙に足すまで 0 のまま出る"
+    },
+    "jobs.skill.momentum": {
+      "label": "スキルの前年同月差",
+      "grain": [
+        "month",
+        "quarter"
+      ],
+      "unit": "share_delta",
+      "source": "hn",
+      "definition": "share(当期) − share(1年前の同期)",
+      "caveat": "12期前のデータが無い期間は出力しない"
+    },
+    "jobs.skill.rank": {
+      "label": "スキルの順位",
+      "grain": [
+        "month",
+        "quarter"
+      ],
+      "unit": "rank",
+      "source": "hn",
+      "definition": "その期の share 降順の順位（1が最多）",
+      "caveat": "語彙に無い技術は順位に現れない"
+    },
+    "jobs.employment.share": {
+      "label": "雇用形態のシェア",
+      "grain": [
+        "month",
+        "quarter"
+      ],
+      "unit": "share",
+      "source": "hn",
+      "definition": "その形態の件数 ÷ 雇用形態を読めた件数",
+      "caveat": null
+    },
+    "jobs.salary.p50.role": {
+      "label": "職種別の提示年収 中央値",
+      "grain": [
+        "quarter"
+      ],
+      "unit": "usd",
+      "source": "hn",
+      "definition": "その職種で給与を読めた求人の中央値。n が 15 未満の期は出力しない",
+      "caveat": "母数が小さい。四半期でしか出さないのはこのため"
+    },
+    "cross.ai_junior.corr": {
+      "label": "AI能力と入門職のラグ相関",
+      "grain": [
+        "quarter"
+      ],
+      "unit": "corr",
+      "source": "cross",
+      "definition": "corr(log(ai.context.p50) を k 期ずらしたもの, jobs.seniority.share.junior)",
+      "caveat": "相関であって因果ではない。両方とも時間とともに動くので、見せかけの相関が出やすい"
+    }
+  }
+}

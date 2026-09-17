@@ -1,0 +1,13 @@
+# 生成物。build.js でいつでも作り直せる
+dist/
+
+# 収集した生データ。求人票の全文を含むので手元だけに置く
+data/raw/
+
+# 一時ファイル
+*.tmp
+node_modules/
+
+# 開発中の確認用スクリーンショット
+*.png
+.playwright-mcp/

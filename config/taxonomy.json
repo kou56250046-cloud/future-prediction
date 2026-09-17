@@ -1,0 +1,167 @@
+{
+  "_comment": "求人票の分類語彙。パターンは JavaScript の正規表現ソース（大小文字無視で適用）。フィールドの順序が固定でないパイプ区切り行を、位置ではなく内容で判定するために使う。",
+  "_version": 2,
+
+  "_roles": "職種。priority が大きいほど具体的で、複数当たったときに優先される。Machine Learning Engineer を swe ではなく ml にするための仕組み。語尾を緩めてあるのは実データが 'Engineers' 'Multiple Engineering Roles' のように複数形・動名詞で書かれるため",
+  "roles": {
+    "ml": {
+      "priority": 90,
+      "patterns": ["machine\\s*learning", "\\bml\\s*(engineer|scientist)", "\\bai\\s*(engineer|researcher|scientist)", "deep\\s*learning", "\\bnlp\\b", "computer\\s*vision", "research(er)?s?\\b", "\\bllm\\s*engineer", "applied\\s*scientist"]
+    },
+    "data": {
+      "priority": 80,
+      "patterns": ["data\\s*(engineer|scientist|analyst|architect)", "analytics\\s*engineer", "\\bbi\\s*(engineer|developer|analyst)", "business\\s*intelligence"]
+    },
+    "security": {
+      "priority": 78,
+      "patterns": ["security\\s*(engineer|architect|analyst|research)", "\\binfosec\\b", "appsec", "\\bciso\\b", "penetration\\s*test", "cryptograph"]
+    },
+    "infra": {
+      "priority": 75,
+      "patterns": ["\\bdevops\\b", "\\bsres?\\b", "site\\s*reliability", "infrastructure\\s*engineer", "platform\\s*engineer", "cloud\\s*(engineer|architect)", "systems?\\s*(engineer|administrator)", "\\bsysadmin", "network\\s*engineer"]
+    },
+    "qa": {
+      "priority": 72,
+      "patterns": ["\\bqa\\b", "quality\\s*(assurance|engineer)", "\\bsdet\\b", "test\\s*(engineer|automation)"]
+    },
+    "design": {
+      "priority": 70,
+      "patterns": ["\\b(ux|ui)\\b", "product\\s*design", "designers?\\b", "user\\s*(experience|research)", "\\bdesign\\s*(lead|manager|director)"]
+    },
+    "pm": {
+      "priority": 68,
+      "patterns": ["product\\s*manage", "\\bpms?\\b", "program\\s*manage", "project\\s*manage", "product\\s*owner", "\\btpm\\b", "technical\\s*program"]
+    },
+    "support": {
+      "priority": 60,
+      "patterns": ["support\\s*(engineer|specialist)", "customer\\s*(success|support)", "solutions?\\s*(engineer|architect)", "sales\\s*engineer", "developer\\s*(advocate|relations)", "\\bdevrel\\b", "technical\\s*writer"]
+    },
+    "swe": {
+      "priority": 50,
+      "patterns": ["software\\s*(engineer|developer|dev\\b)", "\\bswes?\\b", "\\bsdes?\\b", "(back|front)\\s*-?\\s*end", "full\\s*-?\\s*stack", "\\bengineer(s|ing)?\\b", "\\bdevelopers?\\b", "\\bprogrammers?\\b", "\\bcoders?\\b", "mobile\\s*(engineer|developer)", "web\\s*developer", "\\bcto\\b", "\\bhackers?\\b", "\\btech\\s*lead\\b"]
+    }
+  },
+
+  "_seniority": "上から順に照合し、最初に当たったものを採る。junior を senior より先に見る",
+  "seniority": [
+    { "key": "junior", "patterns": ["\\bjuniors?\\b", "\\bjr\\.?\\b", "entry[\\s-]*level", "new\\s*grads?", "\\bgraduates?\\b", "\\binterns?(hip)?\\b", "apprentice", "\\bassociate\\s*(engineer|developer)", "early[\\s-]*career", "\\bl[12]\\b", "0-2\\s*years"] },
+    { "key": "lead", "patterns": ["\\bleads?\\b", "\\bhead\\s*of\\b", "\\bdirector\\b", "\\bvp\\b", "\\bcto\\b", "\\bmanagers?\\b", "\\barchitects?\\b", "\\bprincipal\\b", "\\bdistinguished\\b", "founding\\s*(engineer|researcher)"] },
+    { "key": "senior", "patterns": ["\\bseniors?\\b", "\\bsr\\.?\\b", "\\bstaff\\b", "\\bexperienced\\b", "\\bl[5-9]\\b", "[5-9]\\+?\\s*years", "\\d{2}\\+\\s*years"] },
+    { "key": "mid", "patterns": ["\\bmid[\\s-]*(level|senior)?\\b", "\\bintermediate\\b", "\\bl[34]\\b", "[2-4]\\+?\\s*years"] }
+  ],
+
+  "_employment": "雇用形態。contract を fulltime より先に見る",
+  "employment": [
+    { "key": "intern", "patterns": ["\\binterns?(hip)?\\b", "\\bco-?op\\b"] },
+    { "key": "contract", "patterns": ["\\bcontract(or|ing)?s?\\b", "\\bfreelanc", "\\bconsultan", "\\bc2c\\b", "\\b1099\\b", "\\bb2b\\b"] },
+    { "key": "parttime", "patterns": ["part[\\s-]*time"] },
+    { "key": "fulltime", "patterns": ["full[\\s-]*time", "\\bft\\b", "\\bpermanent\\b", "\\bperm\\b"] }
+  ],
+
+  "_remote": "hybrid を最優先。remote と onsite の両方が書かれていたら hybrid とみなす",
+  "remote": {
+    "hybrid": ["\\bhybrid\\b", "\\d\\s*days?\\s*(a|per)\\s*week\\s*in", "in[\\s-]*office\\s*\\d"],
+    "remote": ["\\bremote(ly)?\\b", "\\bwfh\\b", "work\\s*from\\s*home", "\\bdistributed\\b", "anywhere"],
+    "onsite": ["\\bon[\\s-]*site\\b", "\\bin[\\s-]*office\\b", "\\bin[\\s-]*person\\b", "\\bonsite\\b"]
+  },
+
+  "_country": "簡易判定。指標には使っていないが、後から見たくなるので持っておく",
+  "country": {
+    "US": ["\\bus\\b", "\\busa\\b", "united\\s*states", "\\bsf\\b", "san\\s*francisco", "new\\s*york", "\\bnyc\\b", "seattle", "austin", "boston", "chicago", "denver", "los\\s*angeles", "bay\\s*area", ",\\s*(ca|ny|wa|tx|ma|il|co|ga|or|fl|pa|nc|va|az|mi|nj|md|mn|oh)\\b"],
+    "UK": ["\\buk\\b", "united\\s*kingdom", "london", "manchester", "edinburgh", "\\bengland\\b", "scotland"],
+    "CA": ["\\bcanada\\b", "toronto", "vancouver", "montreal", "ottawa", "waterloo", "ontario"],
+    "EU": ["\\beu\\b", "\\bemea\\b", "europe", "germany", "berlin", "munich", "france", "paris", "amsterdam", "netherlands", "spain", "madrid", "barcelona", "portugal", "lisbon", "poland", "warsaw", "sweden", "stockholm", "zurich", "switzerland", "ireland", "dublin", "italy", "milan", "denmark", "copenhagen", "norway", "oslo", "finland", "helsinki", "austria", "vienna", "belgium", "brussels", "prague", "czech"],
+    "APAC": ["\\bapac\\b", "\\bjapan\\b", "tokyo", "singapore", "australia", "sydney", "melbourne", "\\bindia\\b", "bangalore", "bengaluru", "korea", "seoul", "hong\\s*kong", "taiwan", "new\\s*zealand"],
+    "LATAM": ["\\blatam\\b", "brazil", "argentina", "mexico", "colombia", "chile", "\\bperu\\b", "uruguay"]
+  },
+
+  "_skills": "本文全体から拾う。1求人1カウント。キーが指標名 jobs.skill.share.<key> になる",
+  "skills": {
+    "python": ["\\bpython\\b"],
+    "javascript": ["\\bjavascript\\b", "\\bjs\\b"],
+    "typescript": ["\\btypescript\\b"],
+    "java": ["\\bjava\\b(?!\\s*script)"],
+    "go": ["\\bgolang\\b", "\\bgo\\b(?=\\s*[,/|)]|\\s+(and|programming|developer|engineer|services?|backend))"],
+    "rust": ["\\brust\\b"],
+    "cpp": ["c\\+\\+", "\\bcpp\\b"],
+    "csharp": ["c#", "\\bcsharp\\b", "\\.net\\b", "dotnet"],
+    "ruby": ["\\bruby\\b", "\\brails\\b"],
+    "php": ["\\bphp\\b", "\\blaravel\\b"],
+    "swift": ["\\bswift\\b"],
+    "kotlin": ["\\bkotlin\\b"],
+    "scala": ["\\bscala\\b"],
+    "elixir": ["\\belixir\\b"],
+    "clojure": ["\\bclojure\\b"],
+    "haskell": ["\\bhaskell\\b"],
+    "erlang": ["\\berlang\\b"],
+    "zig": ["\\bzig\\b"],
+    "ocaml": ["\\bocaml\\b"],
+    "julia": ["\\bjulia\\b"],
+    "perl": ["\\bperl\\b"],
+    "lua": ["\\blua\\b"],
+    "sql": ["\\bsql\\b"],
+    "react": ["\\breact(\\.js|js)?\\b"],
+    "vue": ["\\bvue(\\.js|js)?\\b"],
+    "angular": ["\\bangular\\b"],
+    "svelte": ["\\bsvelte(kit)?\\b"],
+    "nextjs": ["\\bnext\\.?js\\b"],
+    "tailwind": ["\\btailwind\\b"],
+    "nodejs": ["\\bnode(\\.js|js)?\\b"],
+    "django": ["\\bdjango\\b"],
+    "spring": ["\\bspring\\s*(boot|framework)\\b"],
+    "graphql": ["\\bgraphql\\b"],
+    "grpc": ["\\bgrpc\\b"],
+    "postgres": ["\\bpostgres(ql)?\\b", "\\bpsql\\b"],
+    "mysql": ["\\bmysql\\b", "\\bmariadb\\b"],
+    "mongodb": ["\\bmongo(db)?\\b"],
+    "redis": ["\\bredis\\b"],
+    "elasticsearch": ["\\belastic(search)?\\b", "\\bopensearch\\b"],
+    "kafka": ["\\bkafka\\b"],
+    "spark": ["\\bspark\\b"],
+    "snowflake": ["\\bsnowflake\\b"],
+    "dbt": ["\\bdbt\\b"],
+    "clickhouse": ["\\bclickhouse\\b"],
+    "duckdb": ["\\bduckdb\\b"],
+    "airflow": ["\\bairflow\\b", "\\bdagster\\b", "\\bprefect\\b"],
+    "aws": ["\\baws\\b", "amazon\\s*web\\s*services", "\\bec2\\b"],
+    "gcp": ["\\bgcp\\b", "google\\s*cloud"],
+    "azure": ["\\bazure\\b"],
+    "kubernetes": ["\\bkubernetes\\b", "\\bk8s\\b"],
+    "docker": ["\\bdocker\\b"],
+    "terraform": ["\\bterraform\\b", "\\bpulumi\\b"],
+    "linux": ["\\blinux\\b", "\\bunix\\b"],
+    "llm": ["\\bllms?\\b", "large\\s*language\\s*model"],
+    "ai_generic": ["\\bai\\b", "artificial\\s*intelligence"],
+    "machine_learning": ["machine\\s*learning", "\\bml\\b(?!\\s*[/-])"],
+    "deep_learning": ["deep\\s*learning", "neural\\s*net"],
+    "pytorch": ["\\bpytorch\\b"],
+    "tensorflow": ["\\btensorflow\\b", "\\bkeras\\b", "\\bjax\\b"],
+    "nlp": ["\\bnlp\\b", "natural\\s*language\\s*processing"],
+    "computer_vision": ["computer\\s*vision", "image\\s*recognition"],
+    "rag": ["\\brag\\b", "retrieval[\\s-]*augmented"],
+    "ai_agents": ["\\bagentic\\b", "\\bai\\s*agents?\\b", "\\bagents?\\b(?=\\s*(framework|system|workflow|orchestr))", "\\bmcp\\b", "model\\s*context\\s*protocol"],
+    "prompt_eng": ["prompt\\s*(engineering|design)", "\\bprompting\\b"],
+    "transformers": ["\\bhugging\\s*face\\b", "\\bhuggingface\\b", "\\btransformer\\s*(model|architecture)"],
+    "langchain": ["\\blangchain\\b", "\\bllamaindex\\b"],
+    "finetuning": ["fine[\\s-]*tun", "\\brlhf\\b", "\\bpeft\\b"],
+    "mlops": ["\\bmlops\\b", "model\\s*serving", "feature\\s*store"],
+    "vector_db": ["\\bvector\\s*(db|database|search|store)\\b", "\\bpinecone\\b", "\\bweaviate\\b", "\\bqdrant\\b", "\\bpgvector\\b", "\\bembeddings?\\b"],
+    "openai_api": ["\\bopenai\\b", "\\bgpt-?[45]\\b", "\\bchatgpt\\b"],
+    "anthropic_api": ["\\banthropic\\b", "\\bclaude\\b"],
+    "copilot": ["\\bcopilot\\b", "\\bcursor\\b(?=\\s*(ide|editor))"],
+    "blockchain": ["\\bblockchain\\b", "\\bsolidity\\b", "\\bweb3\\b", "\\bethereum\\b"],
+    "wasm": ["\\bwasm\\b", "\\bwebassembly\\b"],
+    "embedded": ["\\bembedded\\b", "\\bfirmware\\b", "\\brtos\\b", "\\bfpga\\b"],
+    "ios_dev": ["\\bios\\b", "\\bswiftui\\b", "\\bobjective-?c\\b"],
+    "android_dev": ["\\bandroid\\b"],
+    "unity": ["\\bunity\\b", "\\bunreal\\b", "\\bgodot\\b"],
+    "testing": ["\\bunit\\s*test", "\\be2e\\b", "\\bplaywright\\b", "\\bcypress\\b", "\\bjest\\b", "\\bpytest\\b"],
+    "cicd": ["\\bci/?cd\\b", "\\bgithub\\s*actions\\b", "\\bjenkins\\b"]
+  },
+
+  "_salaryContext": "本文から給与を探すときの手がかり語。この語の近くにある金額だけを給与とみなす。本文全体から $ を拾うと調達額（$42M Series B）や最低支払額（$1）を掴んでしまう",
+  "salaryContext": ["salary", "salaries", "compensation", "\\bcomp\\b", "\\bpay\\b", "paying", "\\bbase\\b", "\\brange\\b", "\\bdoe\\b", "\\boffer\\b", "\\bpackage\\b", "\\bband\\b", "\\bsalar", "\\bcash\\b", "\\bequity\\b", "\\bots?e\\b", "annual"],
+
+  "_aiMentioned": "求人票が AI に言及しているか。jobs.ai_in_jd.share の分子になる",
+  "aiMentioned": ["\\bai\\b", "artificial\\s*intelligence", "\\bllms?\\b", "large\\s*language\\s*model", "machine\\s*learning", "\\bml\\b(?!\\s*[/-])", "deep\\s*learning", "\\bgpt-?[0-9]", "\\bchatgpt\\b", "\\bclaude\\b", "\\bcopilot\\b", "\\bagentic\\b", "neural\\s*net", "\\bgenai\\b", "generative\\s*ai"]
+}

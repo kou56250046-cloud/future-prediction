@@ -1,0 +1,24 @@
+{
+  "name": "future-prediction",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "AIの進化と仕事のニーズ変化を定点観測し、自分の予測をベースラインと比べて採点するローカル完結のシステム",
+  "engines": {
+    "node": ">=22.5.0"
+  },
+  "scripts": {
+    "collect": "node scripts/collect-hn.js && node --no-warnings=ExperimentalWarning scripts/collect-ai.js",
+    "normalize": "node scripts/normalize-jobs.js",
+    "metrics": "node scripts/build-metrics.js",
+    "predict": "node scripts/predict-add.js",
+    "resolve": "node scripts/predict-resolve.js",
+    "score": "node scripts/predict-score.js",
+    "build": "node scripts/build.js",
+    "sync": "npm run collect && npm run normalize && npm run metrics && npm run resolve && npm run build",
+    "compress": "node scripts/compress-old.js",
+    "test": "node --test test/*.test.js"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}

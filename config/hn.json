@@ -1,0 +1,14 @@
+{
+  "_comment": "Hacker News の月次求人スレッドの取得設定。Algolia の公開 API はキー不要・無料。",
+  "searchUrl": "https://hn.algolia.com/api/v1/search_by_date",
+  "itemUrl": "https://hn.algolia.com/api/v1/items",
+  "_tags": "author_whoishiring が毎月3本（hiring / wants_hired / freelancer）を立てる。それを全部拾う",
+  "tags": "story,author_whoishiring",
+  "hitsPerPage": 200,
+  "_kinds": "指標に使うのは hiring と wants_hired だけ。freelancer を取ると本数が1.5倍になり、初回バックフィルがその分伸びる",
+  "kinds": ["hiring", "wants_hired"],
+  "_backfillFrom": "生データはここから全部取る。指標の描画を絞るのは build 側の仕事（2011〜2014 はコメント数が少なく語彙も違う）",
+  "backfillFrom": "2011-01",
+  "_recollectLatest": "直近 N ヶ月は、あとから付いたコメントを拾うために取り直す",
+  "recollectLatestMonths": 2
+}

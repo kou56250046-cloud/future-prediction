@@ -1,0 +1,25 @@
+{"v":1,"id":"collect-hn|2026-09-15T08:47:58.700Z","ts":"2026-09-15T08:47:58.700Z","job":"collect-hn","ok":true,"added":0,"errors":[],"durationMs":3658}
+{"v":1,"id":"collect-hn|2026-09-15T08:48:42.287Z","ts":"2026-09-15T08:48:42.287Z","job":"collect-hn","ok":true,"added":2391,"errors":[],"durationMs":9172}
+{"v":1,"id":"collect-hn|2026-09-15T08:48:59.118Z","ts":"2026-09-15T08:48:59.118Z","job":"collect-hn","ok":true,"added":0,"errors":[],"durationMs":8510}
+{"v":1,"id":"collect-hn|2026-09-15T08:49:22.551Z","ts":"2026-09-15T08:49:22.551Z","job":"collect-hn","ok":true,"added":0,"errors":[],"durationMs":7581}
+{"v":1,"id":"collect-hn|2026-09-16T04:08:09.633Z","ts":"2026-09-16T04:08:09.633Z","job":"collect-hn","ok":true,"added":128175,"errors":[],"durationMs":307455}
+{"v":1,"id":"normalize-jobs|2026-09-16T04:11:32.269Z","ts":"2026-09-16T04:11:32.269Z","job":"normalize-jobs","ok":true,"added":130566,"errors":[],"durationMs":50442}
+{"v":1,"id":"normalize-jobs|2026-09-16T04:15:38.811Z","ts":"2026-09-16T04:15:38.811Z","job":"normalize-jobs","ok":true,"added":130566,"errors":[],"durationMs":59920}
+{"v":1,"id":"build-metrics|2026-09-16T04:20:11.429Z","ts":"2026-09-16T04:20:11.429Z","job":"build-metrics","ok":true,"added":61198,"errors":[],"durationMs":3080}
+{"v":1,"id":"build-metrics|2026-09-16T04:20:28.070Z","ts":"2026-09-16T04:20:28.070Z","job":"build-metrics","ok":true,"added":0,"errors":[],"durationMs":3311}
+{"v":1,"id":"build-metrics|2026-09-16T04:29:28.251Z","ts":"2026-09-16T04:29:28.251Z","job":"build-metrics","ok":true,"added":735,"errors":[],"durationMs":3926}
+{"v":1,"id":"build-metrics|2026-09-16T04:30:01.495Z","ts":"2026-09-16T04:30:01.495Z","job":"build-metrics","ok":true,"added":61737,"errors":[],"durationMs":3687}
+{"v":1,"id":"build-metrics|2026-09-16T04:30:05.028Z","ts":"2026-09-16T04:30:05.028Z","job":"build-metrics","ok":true,"added":61737,"errors":[],"durationMs":3271}
+{"v":1,"id":"collect-ai|2026-09-16T04:46:39.198Z","ts":"2026-09-16T04:46:39.198Z","job":"collect-ai","ok":true,"added":7808,"errors":[],"durationMs":707}
+{"v":1,"id":"build-metrics|2026-09-16T04:46:42.503Z","ts":"2026-09-16T04:46:42.503Z","job":"build-metrics","ok":true,"added":61884,"errors":[],"durationMs":3108}
+{"v":1,"id":"collect-ai|2026-09-16T04:47:01.804Z","ts":"2026-09-16T04:47:01.804Z","job":"collect-ai","ok":false,"added":0,"errors":["app.db が見つからない: C:/Program Files/Git/nonexistent/app.db"],"durationMs":6}
+{"v":1,"id":"build-metrics|2026-09-16T04:47:05.136Z","ts":"2026-09-16T04:47:05.136Z","job":"build-metrics","ok":true,"added":61884,"errors":[],"durationMs":3139}
+{"v":1,"id":"collect-ai|2026-09-16T04:47:05.932Z","ts":"2026-09-16T04:47:05.932Z","job":"collect-ai","ok":false,"added":0,"errors":["読み取りに失敗: Error: file is not a database"],"durationMs":6}
+{"v":1,"id":"build-metrics|2026-09-16T04:48:21.632Z","ts":"2026-09-16T04:48:21.632Z","job":"build-metrics","ok":true,"added":61884,"errors":[],"durationMs":3096}
+{"v":1,"id":"normalize-jobs|2026-09-16T04:50:33.062Z","ts":"2026-09-16T04:50:33.062Z","job":"normalize-jobs","ok":true,"added":130566,"errors":[],"durationMs":59535}
+{"v":1,"id":"build-metrics|2026-09-16T04:50:36.435Z","ts":"2026-09-16T04:50:36.435Z","job":"build-metrics","ok":true,"added":61884,"errors":[],"durationMs":3182}
+{"v":1,"id":"collect-hn|2026-09-16T04:51:43.834Z","ts":"2026-09-16T04:51:43.834Z","job":"collect-hn","ok":true,"added":0,"errors":[],"durationMs":9703}
+{"v":1,"id":"collect-ai|2026-09-16T04:51:44.640Z","ts":"2026-09-16T04:51:44.640Z","job":"collect-ai","ok":true,"added":7808,"errors":[],"durationMs":669}
+{"v":1,"id":"normalize-jobs|2026-09-16T04:52:45.310Z","ts":"2026-09-16T04:52:45.310Z","job":"normalize-jobs","ok":true,"added":130566,"errors":[],"durationMs":59716}
+{"v":1,"id":"build-metrics|2026-09-16T04:52:49.380Z","ts":"2026-09-16T04:52:49.380Z","job":"build-metrics","ok":true,"added":61884,"errors":[],"durationMs":3057}
+{"v":1,"id":"build-metrics|2026-09-16T04:55:58.192Z","ts":"2026-09-16T04:55:58.192Z","job":"build-metrics","ok":true,"added":61884,"errors":[],"durationMs":3361}
