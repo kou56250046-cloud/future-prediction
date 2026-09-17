@@ -11,7 +11,7 @@ import { readJson, writeJson, upsertNdjson, makeId } from './lib/store.js';
 import { runIfMain } from './lib/main.js';
 import { progress, runJob } from './lib/log.js';
 import { listThreads, fetchThreadComments } from './lib/hn.js';
-import { comparePeriods, nowIso } from './lib/period.js';
+import { comparePeriods, nowIso, addPeriods, periodStartDate } from './lib/period.js';
 import { HN_CONFIG_PATH, HN_THREADS_PATH, COLLECT_STATUS_PATH, hnPostsPath } from './lib/paths.js';
 
 function parseArgs(argv) {
@@ -31,6 +31,9 @@ function needsFetch(status, thread, { force, recollectFrom }) {
   if (!rec) return true;
   // 直近の数ヶ月は、あとから付いたコメントを拾うために必ず取り直す
   if (thread.month >= recollectFrom) return true;
+  // 月が終わる前に取ったきりの月も取り直す。skill-trend.js はこれを「収集が済んでいない」とみなし、
+  // 取り直されないとその四半期から先を使えないまま止まる。fetchedAt は UTC なので日付も UTC で比べる
+  if (String(rec.fetchedAt ?? '').slice(0, 10) < periodStartDate(addPeriods(thread.month, 1))) return true;
   return rec.numComments !== thread.numComments;
 }
 
