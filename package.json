@@ -15,6 +15,7 @@
     "resolve": "node scripts/predict-resolve.js",
     "score": "node scripts/predict-score.js",
     "build": "node scripts/build.js",
+    "deploy": "npm run build && node scripts/deploy-pages.js",
     "sync": "npm run collect && npm run normalize && npm run metrics && npm run resolve && npm run build",
     "compress": "node scripts/compress-old.js",
     "test": "node --test test/*.test.js"
