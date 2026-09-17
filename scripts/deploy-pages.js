@@ -1,4 +1,4 @@
-// dist/index.html を gh-pages ブランチへ載せる。GitHub Pages で見るため。
+// dist/index.html と PWA 用のファイルを gh-pages ブランチへ載せる。GitHub Pages で見るため。
 //
 //   npm run build && node scripts/deploy-pages.js
 //
@@ -9,16 +9,23 @@
 // blob → tree → commit を直接作り、gh-pages に push する。
 import { execFileSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
+import { join } from 'node:path';
 import { runIfMain } from './lib/main.js';
-import { ROOT, INDEX_HTML_PATH } from './lib/paths.js';
+import { ROOT, INDEX_HTML_PATH, DIST_DIR } from './lib/paths.js';
+import { PWA_FILE_NAMES } from './lib/pwa.js';
 
 const BRANCH = 'gh-pages';
 const REMOTE = 'origin';
 
-/** 公開するファイル。[公開パス, ローカルパス or null(空ファイル)] */
-const PUBLISH = [
+/**
+ * 公開するファイル。[公開パス, ローカルパス or null(空ファイル)]
+ * PWA のファイルは build.js が書くものと同じ一覧（PWA_FILE_NAMES）から作り、足し忘れを起こさない。
+ * tree は平らにしか作らないので、どれも dist/ 直下に置く
+ */
+export const PUBLISH = [
   ['index.html', INDEX_HTML_PATH],
-  // Jekyll の変換を止める。単一 HTML なので処理させる理由がない
+  ...PWA_FILE_NAMES.map((name) => [name, join(DIST_DIR, name)]),
+  // Jekyll の変換を止める。生成済みのファイルを置くだけなので処理させる理由がない
   ['.nojekyll', null],
 ];
 

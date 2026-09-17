@@ -2,6 +2,7 @@
 //
 // 外部リソースを一切読まない。CDN もウェブフォントも使わない。
 // file:// でダブルクリックして開ける状態を保つ。
+// head に足すのは同じディレクトリのアイコンだけ（PWA_HEAD。scripts/lib/pwa.js）。
 import { esc } from './svg.js';
 
 /**
@@ -269,13 +270,14 @@ section.block h3 { font-size: 13.5px; margin: 14px 0 6px; }
 `;
 
 /** ページ全体を組み立てる。script はインラインで </body> の直前に1つだけ置く */
-export function page({ title, body, script }) {
+export function page({ title, body, script, head }) {
   return `<!doctype html>
 <html lang="ja">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>${esc(title)}</title>
+<title>${esc(title)}</title>${head ? `
+${head}` : ''}
 <style>${CSS}</style>${script ? '\n<noscript><style>.tabpanel ~ .tabpanel { display: block; }</style></noscript>' : ''}
 </head>
 <body>

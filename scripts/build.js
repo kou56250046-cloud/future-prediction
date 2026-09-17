@@ -2,9 +2,12 @@
 //
 //   node scripts/build.js
 //
-// 出力は単一ファイル。外部リソースを読まないので file:// で開ける。
+// 画面は index.html の単一ファイル。外部リソースを読まないので file:// で開ける。
 // SVG はここで座標まで計算して埋め込む。
+// 並べて PWA 用のファイル（manifest・サービスワーカー・アイコン）も書く。
+// これらは http(s) で開いたときだけ読まれ、file:// で見る分には無くても困らない。
 import { mkdir, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
 import { existsSync } from 'node:fs';
 import { readNdjson, readJson } from './lib/store.js';
 import { runIfMain } from './lib/main.js';
@@ -15,6 +18,7 @@ import {
 } from './lib/svg.js';
 import { page, section, figure, tile, tiles, table, tabs, TAB_SCRIPT } from './lib/html.js';
 import { guideBody } from './lib/guide.js';
+import { pwaFiles, PWA_HEAD, PWA_SCRIPT } from './lib/pwa.js';
 import {
   skillTrends, disagrees, isStale, skillTerms, TREND_LABELS,
   MIN_COUNT, Z, REL_UP, REL_SURGE, REL_PLUNGE, STALE_DAYS,
@@ -994,12 +998,18 @@ async function main() {
     + ` ${esc(String(Object.keys(config?.families ?? {}).length))} 個の系列）にあります。生成 ${esc(nowIso())}</p>`,
   ].join('\n');
 
-  const html = page({ title: 'AI の進化と仕事のニーズ', body, script: TAB_SCRIPT });
+  const html = page({ title: 'AI の進化と仕事のニーズ', body, head: PWA_HEAD, script: TAB_SCRIPT + PWA_SCRIPT });
   await mkdir(DIST_DIR, { recursive: true });
   await writeFile(INDEX_HTML_PATH, html, 'utf8');
 
   const bytes = Buffer.byteLength(html, 'utf8');
   console.log(`[build] ${INDEX_HTML_PATH} を生成（${(bytes / 1024).toFixed(0)} KB）`);
+
+  // index.html を書いた後にする。アイコンの描画で失敗しても、file:// で見る画面は更新済みにしておく
+  const files = pwaFiles({ version: nowIso() });
+  for (const f of files) await writeFile(join(DIST_DIR, f.name), f.content);
+  const pwaBytes = files.reduce((s, f) => s + Buffer.byteLength(f.content), 0);
+  console.log(`[build] PWA 用のファイル ${files.length} 個を生成（${(pwaBytes / 1024).toFixed(0)} KB）`);
 }
 
 runIfMain(import.meta.url, main);
