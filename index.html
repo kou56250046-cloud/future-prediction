@@ -4,6 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>AI の進化と仕事のニーズ</title>
+<link rel="icon" href="icon-192.png" type="image/png" sizes="192x192">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#f9f9f7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0d0d0d" media="(prefers-color-scheme: dark)">
 <style>
 :root {
   color-scheme: light;
@@ -267,7 +272,7 @@ section.block h3 { font-size: 13.5px; margin: 14px 0 6px; }
 <div class="wrap">
 <header class="page">
 <h1>AI の進化と仕事のニーズ</h1>
-<p class="meta">データ 2015-01 〜 2026-09 ／ 生成 2026-09-17
+<p class="meta">データ 2015-01 〜 2026-09 ／ 生成 2026-09-18
  ／ 出典 Hacker News "Who is hiring?" ＋ ai-scraping</p>
 <p class="verdict">判定済み 3件 — 現状維持と直線外挿に負けています。</p>
 </header>
@@ -2306,7 +2311,7 @@ section.block h3 { font-size: 13.5px; margin: 14px 0 6px; }
 <p class="footnote">予測の書き方の例は <code>node scripts/predict-add.js --example</code>、指標名の検索は <code>node scripts/predict-add.js --metrics jobs.skill</code>。</p>
 </section>
 </div>
-<p class="footnote">このページは外部リソースを一切読み込みません。オフラインで開けます。指標の定義は <code>config/metrics.json</code>（20 個の固定指標と 9 個の系列）にあります。生成 2026-09-17T07:58:35.701Z</p>
+<p class="footnote">このページは外部リソースを一切読み込みません。オフラインで開けます。指標の定義は <code>config/metrics.json</code>（20 個の固定指標と 9 個の系列）にあります。生成 2026-09-18T00:00:40.875Z</p>
 </div>
 <script>
 (function () {
@@ -2396,6 +2401,23 @@ section.block h3 { font-size: 13.5px; margin: 14px 0 6px; }
   var settledY = window.pageYOffset;
   window.addEventListener('load', function () {
     if (location.hash && window.pageYOffset !== settledY) fromLocation(true);
+  });
+})();
+
+(function () {
+  if (!/^https?:$/.test(location.protocol) || !('serviceWorker' in navigator)) return;
+  // オリジン直下に置かれているときは登録しない。サービスワーカーの範囲がオリジン全体になり、
+  // 開発用サーバを同じポートで使い回したときに、他のプロジェクトのリクエストまで抱え込む。
+  // GitHub Pages は /future-prediction/ 配下なので、公開先では常に登録される
+  if (location.pathname.replace(/[^/]*$/, '') === '/') return;
+  var manifest = document.createElement('link');
+  manifest.rel = 'manifest';
+  manifest.href = 'manifest.webmanifest';
+  document.head.appendChild(manifest);
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('sw.js').catch(function (err) {
+      console.warn('[pwa] サービスワーカーを登録できなかった', err);
+    });
   });
 })();
 </script>
